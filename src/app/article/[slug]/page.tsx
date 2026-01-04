@@ -98,13 +98,13 @@ export default async function ArticlePage({
 
     return (
         <div className="container py-6 lg:py-12 mx-auto">
-            <Breadcrumbs items={breadcrumbItems} className="mb-6 justify-center" />
+            <Breadcrumbs items={breadcrumbItems} className="mb-6" />
 
             <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 items-start">
                 {/* Main Content */}
                 <article className="lg:col-span-8">
-                    <header className="space-y-4 text-center mb-8">
-                        <div className="flex items-center justify-center space-x-2">
+                    <header className="space-y-4 mb-8">
+                        <div className="flex items-center space-x-2">
                             <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
                                 {categoryName}
                             </span>
