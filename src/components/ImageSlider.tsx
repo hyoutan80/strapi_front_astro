@@ -41,7 +41,7 @@ export function ImageSlider({ images, className }: ImageSliderProps) {
     if (!images || !Array.isArray(images) || images.length === 0) return null;
 
     return (
-        <div className={cn("relative group overflow-hidden rounded-2xl shadow-xl my-10", className)}>
+        <div className={cn("relative group overflow-hidden rounded-xl shadow-xl my-10", className)}>
             <div className="overflow-hidden" ref={emblaRef}>
                 <div className="flex">
                     {images.map((img: any, index: number) => {

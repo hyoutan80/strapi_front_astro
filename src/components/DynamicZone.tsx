@@ -82,6 +82,12 @@ function ComponentRenderer({ block }: { block: any }) {
                                     const { id, cleanText } = extractId(children);
                                     return <h3 id={id} {...props}>{cleanText}</h3>;
                                 },
+                                // 画像の角丸対応
+                                img: ({ node, ...props }) => (
+                                    <div className="my-8 overflow-hidden rounded-xl border border-border/40">
+                                        <img className="w-full h-auto object-cover" {...props} />
+                                    </div>
+                                ),
                                 // リンクなどのスタイル調整
                                 a: ({ node, ...props }) => (
                                     <a className="text-primary hover:underline" {...props} />
