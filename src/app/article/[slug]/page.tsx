@@ -97,7 +97,7 @@ export default async function ArticlePage({
     breadcrumbItems.push({ label: title });
 
     return (
-        <div className="container py-6 lg:py-12 mx-auto">
+        <div className="w-full">
             <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 items-start">
                 {/* Main Content */}
                 <article className="lg:col-span-8">
