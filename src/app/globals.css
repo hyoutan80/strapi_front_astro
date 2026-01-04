@@ -75,12 +75,22 @@
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Heading Anchor Spacing */
+h2,
+h3 {
+  scroll-margin-top: 100px;
 }
 
 /* External Link Indicators */
