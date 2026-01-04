@@ -98,11 +98,17 @@ function ComponentRenderer({ block, getHeadingId }: { block: any, getHeadingId: 
             );
 
         case "quote":
+            const quoteBody = block.body || block.quote || block.text;
+            const quoteTitle = block.title || block.author;
             return (
-                <blockquote className="my-8 border-l-4 border-primary pl-6 py-2 italic text-xl text-muted-foreground bg-muted/30 rounded-r-lg">
-                    <p className="mb-2">"{block.body || block.quote || block.text}"</p>
-                    {block.author && (
-                        <cite className="block text-sm font-bold not-italic text-primary">— {block.author}</cite>
+                <blockquote className="my-8 border-l-4 border-primary pl-6 py-3 italic text-muted-foreground bg-muted/30 rounded-r-lg">
+                    {quoteBody && (
+                        <p className="text-xl mb-2 text-foreground">"{quoteBody}"</p>
+                    )}
+                    {quoteTitle && (
+                        <cite className="block text-sm font-bold not-italic text-primary">
+                            — {quoteTitle}
+                        </cite>
                     )}
                 </blockquote>
             );
