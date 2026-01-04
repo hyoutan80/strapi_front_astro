@@ -32,9 +32,34 @@ function ComponentRenderer({ block }: { block: any }) {
     const componentName = block.__component;
     const type = componentName?.split(".").pop()?.toLowerCase();
 
-    // Markdown内の見出しに順番にIDを割り当てるためのカウンター（このブロック内のみ）
-    let localHeadingIndex = 0;
-    const assignedIds = block._headingIds || [];
+    // 見出しテキストから {#id} を抽出するためのヘルパー
+    const extractId = (children: any) => {
+        if (typeof children === "string") {
+            const match = children.match(/\{#(.*?)\}/);
+            if (match) {
+                return {
+                    id: match[1],
+                    cleanText: children.replace(/\{#.*?\}/, "").trim()
+                };
+            }
+        }
+        // children が配列（強調などの装飾がある場合）のケースも考慮
+        if (Array.isArray(children)) {
+            for (let i = 0; i < children.length; i++) {
+                if (typeof children[i] === "string") {
+                    const match = children[i].match(/\{#(.*?)\}/);
+                    if (match) {
+                        const id = match[1];
+                        // 元の配列をコピーして、IDタグ部分を空文字に置換
+                        const newChildren = [...children];
+                        newChildren[i] = children[i].replace(/\{#.*?\}/, "").trim();
+                        return { id, cleanText: newChildren };
+                    }
+                }
+            }
+        }
+        return { id: undefined, cleanText: children };
+    };
 
     switch (type) {
         case "rich-text":
@@ -49,13 +74,13 @@ function ComponentRenderer({ block }: { block: any }) {
                         <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
                             components={{
-                                h2: ({ node, ...props }) => {
-                                    const id = assignedIds[localHeadingIndex++];
-                                    return <h2 id={id} {...props} />;
+                                h2: ({ node, children, ...props }) => {
+                                    const { id, cleanText } = extractId(children);
+                                    return <h2 id={id} {...props}>{cleanText}</h2>;
                                 },
-                                h3: ({ node, ...props }) => {
-                                    const id = assignedIds[localHeadingIndex++];
-                                    return <h3 id={id} {...props} />;
+                                h3: ({ node, children, ...props }) => {
+                                    const { id, cleanText } = extractId(children);
+                                    return <h3 id={id} {...props}>{cleanText}</h3>;
                                 },
                                 // リンクなどのスタイル調整
                                 a: ({ node, ...props }) => (

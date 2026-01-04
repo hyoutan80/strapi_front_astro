@@ -31,9 +31,7 @@ export function processContentWithToc(content: any): { content: any; headings: T
 
         // 2. 文字列の場合 (HTML または Markdown)
         if (typeof rawContent === 'string') {
-            const assignedIds: string[] = [];
-
-            // HTMLの見出しタグを抽出
+            // HTMLの見出しタグを抽出・加工
             const processedHtml = rawContent.replace(/<(h[23])(.*?)>(.*?)<\/h[23]>/g, (match, tag, attrs, text) => {
                 headingCount++;
                 const idMatch = attrs.match(/id=["'](.*?)["']/);
@@ -41,14 +39,13 @@ export function processContentWithToc(content: any): { content: any; headings: T
                 const level = parseInt(tag.substring(1));
                 const cleanText = text.replace(/<[^>]*>?/gm, '');
                 headings.push({ id, text: cleanText, level });
-                assignedIds.push(id);
 
                 return idMatch ? match : `<${tag} id="${id}" ${attrs}>${text}</${tag}>`;
             });
 
-            // Markdownの見出し（##, ###）を抽出
+            // Markdownの見出し（##, ###）を抽出し、IDを埋め込む ({#id})
             const lines = processedHtml.split('\n');
-            lines.forEach(line => {
+            const processedLines = lines.map(line => {
                 const h2Match = line.match(/^##\s+(.*)$/);
                 const h3Match = line.match(/^###\s+(.*)$/);
                 if (h2Match || h3Match) {
@@ -57,11 +54,13 @@ export function processContentWithToc(content: any): { content: any; headings: T
                     const text = (h2Match ? h2Match[1] : h3Match![1]).trim();
                     const id = `heading-${headingCount}`;
                     headings.push({ id, text, level });
-                    assignedIds.push(id);
+                    // 見出しの末尾にIDを埋め込む (標準的なMarkdown拡張形式)
+                    return `${h2Match ? '##' : '###'} ${text} {#${id}}`;
                 }
+                return line;
             });
 
-            return { content: processedHtml, assignedIds };
+            return processedLines.join('\n');
         }
 
         // 3. 配列（Blocks または ダイナミックゾーン）の場合
@@ -72,9 +71,9 @@ export function processContentWithToc(content: any): { content: any; headings: T
                     if (compName.endsWith('rich-text') || compName.endsWith('rich_text') || compName.endsWith('richtext')) {
                         const richTextTarget = item.body || item.content;
                         if (richTextTarget) {
-                            const result = _process(richTextTarget);
-                            if (item.body) return { ...item, body: result.content, _headingIds: result.assignedIds };
-                            if (item.content) return { ...item, content: result.content, _headingIds: result.assignedIds };
+                            const processed = _process(richTextTarget);
+                            if (item.body) return { ...item, body: processed };
+                            if (item.content) return { ...item, content: processed };
                         }
                     }
                     return item;
@@ -99,11 +98,6 @@ export function processContentWithToc(content: any): { content: any; headings: T
         return rawContent;
     }
 
-    const result = _process(content);
-    // トップレベルの戻り値の型を既存のコードと合わせる
-    const finalContent = (typeof result === 'object' && !Array.isArray(result) && result.content !== undefined)
-        ? result.content
-        : result;
-
-    return { content: finalContent, headings };
+    const processedContent = _process(content);
+    return { content: processedContent, headings };
 }
