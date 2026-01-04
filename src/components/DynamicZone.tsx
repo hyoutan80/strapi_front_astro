@@ -115,7 +115,7 @@ function ComponentRenderer({ block }: { block: any }) {
                             width={file?.width || 1200}
                             height={file?.height || 675}
                             layout="responsive"
-                            className="object-cover"
+                            className="object-cover rounded-xl"
                         />
                     </div>
                     {block.caption && (

@@ -103,9 +103,6 @@ export default async function ArticlePage({
             <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 items-start">
                 {/* Main Content */}
                 <article className="lg:col-span-8">
-                    {/* Top Banner Ad */}
-                    {ads.length > 0 && <AdBanner ad={ads[0]} className="mb-8" />}
-
                     <header className="space-y-4 text-center mb-8">
                         <div className="flex items-center justify-center space-x-2">
                             <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">

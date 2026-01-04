@@ -78,7 +78,7 @@ function BlockRenderer({ block }: { block: any }) {
                         width={block.image.width || 800}
                         height={block.image.height || 450}
                         layout="responsive"
-                        className="object-cover"
+                        className="object-cover rounded-xl"
                     />
                 </div>
             );

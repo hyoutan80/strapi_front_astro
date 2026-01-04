@@ -55,7 +55,7 @@ export function ImageSlider({ images, className }: ImageSliderProps) {
                                     src={imageUrl}
                                     alt={imgData.alternativeText || `Slide ${index + 1}`}
                                     fill
-                                    className="object-cover"
+                                    className="object-cover rounded-xl"
                                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
                                 />
                                 {imgData.caption && (
