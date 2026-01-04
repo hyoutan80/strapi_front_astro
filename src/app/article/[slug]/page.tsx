@@ -102,7 +102,10 @@ export default async function ArticlePage({
                 {/* Main Content */}
                 <article className="lg:col-span-8">
                     <Breadcrumbs items={breadcrumbItems} className="mb-6" />
-                    <header className="space-y-4 mb-8">
+                    <header className="mb-8">
+                        <h1 className="text-3xl font-extrabold leading-tight tracking-tighter md:text-5xl lg:text-5xl mb-4">
+                            {title}
+                        </h1>
                         <div className="flex items-center space-x-2">
                             <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
                                 {categoryName}
@@ -114,9 +117,6 @@ export default async function ArticlePage({
                             )}
                             <ViewCounter slug={slug} initialViews={views} />
                         </div>
-                        <h1 className="text-3xl font-extrabold leading-tight tracking-tighter md:text-5xl lg:text-5xl">
-                            {title}
-                        </h1>
                     </header>
 
                     {imageUrl && (
