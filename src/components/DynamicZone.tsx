@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { getStrapiMedia } from "@/lib/strapi";
 import { StrapiBlocks } from "./StrapiBlocks";
+import { ImageSlider } from "./ImageSlider";
 
 interface DynamicZoneProps {
     blocks: any[];
@@ -115,26 +116,7 @@ function ComponentRenderer({ block, getHeadingId }: { block: any, getHeadingId: 
 
         case "slider":
             const files = block.files?.data || block.files || [];
-            if (!Array.isArray(files) || files.length === 0) return null;
-            return (
-                <div className="my-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {files.map((f: any, i: number) => {
-                        const fData = f.attributes || f;
-                        const fUrl = getStrapiMedia(fData.url);
-                        if (!fUrl) return null;
-                        return (
-                            <div key={i} className="overflow-hidden rounded-lg border border-border/40 aspect-[4/3] relative">
-                                <Image
-                                    src={fUrl}
-                                    alt={fData.alternativeText || ""}
-                                    fill
-                                    className="object-cover"
-                                />
-                            </div>
-                        );
-                    })}
-                </div>
-            );
+            return <ImageSlider images={files} />;
 
         default:
             console.warn("Unknown component type:", type, block);
