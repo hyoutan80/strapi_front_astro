@@ -14,22 +14,13 @@ interface DynamicZoneProps {
 export function DynamicZone({ blocks }: DynamicZoneProps) {
     if (!blocks || !Array.isArray(blocks)) return null;
 
-    // 全体での見出しカウンターを初期化
-    let globalHeadingCount = 0;
-
     return (
         <div className="space-y-12">
             {blocks.map((block, index) => {
-                // 各コンポーネントの見出し数を事前に計算して、カウンターを引き継ぐ必要がある
-                // ただし、ここではレンダリング順にカウントを増やす簡易的な実装とします
                 return (
                     <ComponentRenderer
                         key={index}
                         block={block}
-                        getHeadingId={() => {
-                            globalHeadingCount++;
-                            return `heading-${globalHeadingCount}`;
-                        }}
                     />
                 );
             })}
@@ -37,9 +28,13 @@ export function DynamicZone({ blocks }: DynamicZoneProps) {
     );
 }
 
-function ComponentRenderer({ block, getHeadingId }: { block: any, getHeadingId: () => string }) {
+function ComponentRenderer({ block }: { block: any }) {
     const componentName = block.__component;
     const type = componentName?.split(".").pop()?.toLowerCase();
+
+    // Markdown内の見出しに順番にIDを割り当てるためのカウンター（このブロック内のみ）
+    let localHeadingIndex = 0;
+    const assignedIds = block._headingIds || [];
 
     switch (type) {
         case "rich-text":
@@ -54,12 +49,14 @@ function ComponentRenderer({ block, getHeadingId }: { block: any, getHeadingId: 
                         <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
                             components={{
-                                h2: ({ node, ...props }) => (
-                                    <h2 id={getHeadingId()} {...props} />
-                                ),
-                                h3: ({ node, ...props }) => (
-                                    <h3 id={getHeadingId()} {...props} />
-                                ),
+                                h2: ({ node, ...props }) => {
+                                    const id = assignedIds[localHeadingIndex++];
+                                    return <h2 id={id} {...props} />;
+                                },
+                                h3: ({ node, ...props }) => {
+                                    const id = assignedIds[localHeadingIndex++];
+                                    return <h3 id={id} {...props} />;
+                                },
                                 // リンクなどのスタイル調整
                                 a: ({ node, ...props }) => (
                                     <a className="text-primary hover:underline" {...props} />
