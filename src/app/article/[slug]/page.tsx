@@ -72,7 +72,9 @@ export default async function ArticlePage({
 
     // Strapi 4/5 structure handling: favor attributes if present
     const articleData = article.attributes || article;
-    const { title, content, publishedAt, cover, category, views, blocks } = articleData;
+    const { title, content, publishedAt, cover, category, views, blocks, display_date } = articleData;
+
+    const displayDate = display_date || publishedAt;
 
     // Use blocks if present (Dynamic Zone), otherwise fallback to content
     const rawContentSource = (blocks && Array.isArray(blocks) && blocks.length > 0)
@@ -110,9 +112,9 @@ export default async function ArticlePage({
                             <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
                                 {categoryName}
                             </span>
-                            {publishedAt && (
+                            {displayDate && (
                                 <time className="text-sm text-muted-foreground">
-                                    {format(new Date(publishedAt), "MMMM dd, yyyy")}
+                                    {format(new Date(displayDate), "MMMM dd, yyyy")}
                                 </time>
                             )}
                             <ViewCounter slug={slug} initialViews={views} />

@@ -78,6 +78,7 @@ export interface Article {
     publishedAt: string | null;
     createdAt: string;
     updatedAt: string;
+    display_date?: string | null;
     cover?: StrapiData<ImageAttributes> | null; // Strapi 5 might return just the object
     category?: Category | null;
     views?: number;

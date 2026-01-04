@@ -25,7 +25,7 @@ async function getCategoryData(slug: string) {
 async function getArticlesByCategory(slug: string) {
     const path = `/articles`;
     const urlParamsObject = {
-        sort: ["createdAt:desc"],
+        sort: ["display_date:desc", "publishedAt:desc"],
         filters: {
             category: {
                 slug: {

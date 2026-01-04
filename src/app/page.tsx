@@ -11,7 +11,7 @@ async function getArticles() {
     const token = process.env.NEXT_PUBLIC_STRAPI_API_TOKEN;
     const path = `/articles`;
     const urlParamsObject = {
-      sort: ["createdAt:desc"],
+      sort: ["display_date:desc", "publishedAt:desc"],
       populate: {
         cover: { fields: ["url"] },
         category: { populate: "*" },

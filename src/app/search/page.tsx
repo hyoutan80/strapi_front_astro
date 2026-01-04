@@ -20,7 +20,7 @@ async function searchArticles(query: string) {
                     { description: { $containsi: query } },
                 ],
             },
-            sort: ["createdAt:desc"],
+            sort: ["display_date:desc", "publishedAt:desc"],
             populate: {
                 cover: { fields: ["url"] },
                 category: { populate: "*" },

@@ -12,7 +12,8 @@ interface ArticleCardProps {
 }
 
 export function ArticleCard({ article, className }: ArticleCardProps) {
-    const { title, slug, publishedAt, cover, category, description } = article;
+    const { title, slug, publishedAt, cover, category, description, display_date } = article;
+    const displayDate = display_date || publishedAt;
 
     // Strapi 5 response handling for images and relations
     // cover might be { url: "..." } or { data: { url: "..." } } depending on version/plugin
@@ -52,9 +53,9 @@ export function ArticleCard({ article, className }: ArticleCardProps) {
                     <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
                         {categoryName}
                     </span>
-                    {publishedAt && (
+                    {displayDate && (
                         <span className="text-xs text-muted-foreground">
-                            {format(new Date(publishedAt), "MMM dd, yyyy")}
+                            {format(new Date(displayDate), "MMM dd, yyyy")}
                         </span>
                     )}
                 </div>

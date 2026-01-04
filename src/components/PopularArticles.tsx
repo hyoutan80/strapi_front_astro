@@ -5,7 +5,7 @@ import { fetchAPI } from "@/lib/strapi";
 async function getPopularArticles(categorySlug?: string) {
     const path = `/articles`;
     const urlParamsObject: any = {
-        sort: ["views:desc", "createdAt:desc"],
+        sort: ["views:desc", "display_date:desc", "publishedAt:desc"],
         pagination: {
             page: 1,
             pageSize: 5,
