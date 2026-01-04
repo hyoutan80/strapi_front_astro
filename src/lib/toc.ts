@@ -12,81 +12,90 @@ export function processContentWithToc(content: any): { content: any; headings: T
     const headings: TocItem[] = [];
     let headingCount = 0;
 
-    // 1. 最も内側の実データを探す (Strapi 4/5の様々なパターンに対応)
-    let rawContent = content;
+    function _process(data: any): any {
+        // 1. 最も内側の実データを探す
+        let rawContent = data;
+        if (data?.attributes) {
+            rawContent = data.attributes.content || data.attributes.body || data.attributes;
+        }
 
-    // attributes の中身をチェック
-    if (content?.attributes) {
-        rawContent = content.attributes.content || content.attributes.body || content.attributes;
-    }
-
-    // 文字列でも配列でもない場合、既知のラップキーを探す
-    if (rawContent && typeof rawContent === 'object' && !Array.isArray(rawContent)) {
-        // フィールド名が content 以外の場合も考慮 (bodyなど)
-        const candidates = [rawContent.content, rawContent.body, rawContent.data, rawContent.document, rawContent.blocks, rawContent.value];
-        for (const cand of candidates) {
-            if (cand && (typeof cand === 'string' || Array.isArray(cand))) {
-                rawContent = cand;
-                break;
+        if (rawContent && typeof rawContent === 'object' && !Array.isArray(rawContent)) {
+            const candidates = [rawContent.content, rawContent.body, rawContent.data, rawContent.document, rawContent.blocks, rawContent.value];
+            for (const cand of candidates) {
+                if (cand && (typeof cand === 'string' || Array.isArray(cand))) {
+                    rawContent = cand;
+                    break;
+                }
             }
         }
-    }
 
-    // 2. HTML文字列の場合
-    if (typeof rawContent === 'string') {
-        const processedHtml = rawContent.replace(/<(h[23])(.*?)>(.*?)<\/h[23]>/g, (match, tag, attrs, text) => {
-            headingCount++;
-            const idMatch = attrs.match(/id=["'](.*?)["']/);
-            const id = idMatch ? idMatch[1] : `heading-${headingCount}`;
-            const level = parseInt(tag.substring(1));
-            const cleanText = text.replace(/<[^>]*>?/gm, '');
-            headings.push({ id, text: cleanText, level });
+        // 2. 文字列の場合 (HTML または Markdown)
+        if (typeof rawContent === 'string') {
+            // HTMLの見出しタグを抽出
+            const processedHtml = rawContent.replace(/<(h[23])(.*?)>(.*?)<\/h[23]>/g, (match, tag, attrs, text) => {
+                headingCount++;
+                const idMatch = attrs.match(/id=["'](.*?)["']/);
+                const id = idMatch ? idMatch[1] : `heading-${headingCount}`;
+                const level = parseInt(tag.substring(1));
+                const cleanText = text.replace(/<[^>]*>?/gm, '');
+                headings.push({ id, text: cleanText, level });
 
-            return idMatch ? match : `<${tag} id="${id}" ${attrs}>${text}</${tag}>`;
-        });
-        return { content: processedHtml, headings };
-    }
+                return idMatch ? match : `<${tag} id="${id}" ${attrs}>${text}</${tag}>`;
+            });
 
-    // 3. Blocks形式 または ダイナミックゾーン（JSON配列）の場合
-    if (Array.isArray(rawContent)) {
-        const processedArray = rawContent.map((item: any) => {
-            // ダイナミックゾーンのコンポーネントの場合 (例: shared.rich-text)
-            if (item.__component) {
-                const compName = item.__component.toLowerCase();
-                // "rich-text", "rich_text", "richtext" などのバリエーションに対応
-                if (compName.endsWith('rich-text') || compName.endsWith('rich_text') || compName.endsWith('richtext')) {
-                    const richTextTarget = item.body || item.content;
-                    if (richTextTarget) {
-                        const { content: processed, headings: subHeadings } = processContentWithToc(richTextTarget);
-                        headings.push(...subHeadings);
-                        // body または content フィールドを更新
-                        if (item.body) return { ...item, body: processed };
-                        if (item.content) return { ...item, content: processed };
+            // Markdownの見出し（##, ###）を抽出
+            const lines = processedHtml.split('\n'); // processedHtmlに対してMarkdownを処理
+            let finalContent = processedHtml;
+            lines.forEach(line => {
+                const h2Match = line.match(/^##\s+(.*)$/);
+                const h3Match = line.match(/^###\s+(.*)$/);
+                if (h2Match || h3Match) {
+                    headingCount++;
+                    const level = h2Match ? 2 : 3;
+                    const text = (h2Match ? h2Match[1] : h3Match![1]).trim();
+                    const id = `heading-${headingCount}`;
+                    headings.push({ id, text, level });
+                }
+            });
+
+            return finalContent;
+        }
+
+        // 3. 配列（Blocks または ダイナミックゾーン）の場合
+        if (Array.isArray(rawContent)) {
+            return rawContent.map((item: any) => {
+                if (item.__component) {
+                    const compName = item.__component.toLowerCase();
+                    if (compName.endsWith('rich-text') || compName.endsWith('rich_text') || compName.endsWith('richtext')) {
+                        const richTextTarget = item.body || item.content;
+                        if (richTextTarget) {
+                            const processed = _process(richTextTarget);
+                            if (item.body) return { ...item, body: processed };
+                            if (item.content) return { ...item, content: processed };
+                        }
                     }
+                    return item;
+                }
+
+                if (item.type === 'heading' && (item.level === 2 || item.level === 3)) {
+                    headingCount++;
+                    const id = item.id || `heading-${headingCount}`;
+                    const text = item.children
+                        ? item.children
+                            .filter((c: any) => c.type === 'text')
+                            .map((c: any) => c.text)
+                            .join('')
+                        : '';
+                    headings.push({ id, text, level: item.level });
+                    return { ...item, id };
                 }
                 return item;
-            }
+            });
+        }
 
-            // 通常の Blocks 形式の Heading ブロックの場合
-            if (item.type === 'heading' && (item.level === 2 || item.level === 3)) {
-                headingCount++;
-                const id = item.id || `heading-${headingCount}`;
-                const text = item.children
-                    ? item.children
-                        .filter((c: any) => c.type === 'text')
-                        .map((c: any) => c.text)
-                        .join('')
-                    : '';
-                headings.push({ id, text, level: item.level });
-                return { ...item, id };
-            }
-            return item;
-        });
-        return { content: processedArray, headings };
+        return rawContent;
     }
 
-    // デバッグ用: どちらの形式にも当てはまらない場合
-    console.warn("processContentWithToc: Unknown content type:", typeof rawContent, rawContent);
-
-    return { content: rawContent, headings: [] };
+    const processedContent = _process(content);
+    return { content: processedContent, headings };
 }

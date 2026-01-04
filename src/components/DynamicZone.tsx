@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { getStrapiMedia } from "@/lib/strapi";
 import { StrapiBlocks } from "./StrapiBlocks";
 
@@ -11,37 +13,66 @@ interface DynamicZoneProps {
 export function DynamicZone({ blocks }: DynamicZoneProps) {
     if (!blocks || !Array.isArray(blocks)) return null;
 
+    // 全体での見出しカウンターを初期化
+    let globalHeadingCount = 0;
+
     return (
         <div className="space-y-12">
-            {blocks.map((block, index) => (
-                <ComponentRenderer key={index} block={block} />
-            ))}
+            {blocks.map((block, index) => {
+                // 各コンポーネントの見出し数を事前に計算して、カウンターを引き継ぐ必要がある
+                // ただし、ここではレンダリング順にカウントを増やす簡易的な実装とします
+                return (
+                    <ComponentRenderer
+                        key={index}
+                        block={block}
+                        getHeadingId={() => {
+                            globalHeadingCount++;
+                            return `heading-${globalHeadingCount}`;
+                        }}
+                    />
+                );
+            })}
         </div>
     );
 }
 
-function ComponentRenderer({ block }: { block: any }) {
-    // Strapiのコンポーネント名は "__component" フィールドに入っています
+function ComponentRenderer({ block, getHeadingId }: { block: any, getHeadingId: () => string }) {
     const componentName = block.__component;
-
-    // 名前空間を除去した純粋な名前を取得 (例: "shared.rich-text" -> "rich-text")
     const type = componentName?.split(".").pop()?.toLowerCase();
 
     switch (type) {
         case "rich-text":
         case "rich_text":
         case "richtext":
-            // "Shared.rich-text" コンポーネントの場合、"body" または "content" フィールドに Blocks が入っていることが多いです
             const richTextContent = block.body || block.content;
             if (Array.isArray(richTextContent)) {
                 return <StrapiBlocks content={richTextContent} />;
             } else if (typeof richTextContent === "string") {
-                return <div dangerouslySetInnerHTML={{ __html: richTextContent }} />;
+                return (
+                    <div className="markdown-content">
+                        <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                                h2: ({ node, ...props }) => (
+                                    <h2 id={getHeadingId()} {...props} />
+                                ),
+                                h3: ({ node, ...props }) => (
+                                    <h3 id={getHeadingId()} {...props} />
+                                ),
+                                // リンクなどのスタイル調整
+                                a: ({ node, ...props }) => (
+                                    <a className="text-primary hover:underline" {...props} />
+                                ),
+                            }}
+                        >
+                            {richTextContent}
+                        </ReactMarkdown>
+                    </div>
+                );
             }
             return null;
 
         case "media":
-            // "Shared.media" コンポーネント
             const file = block.file;
             const mediaUrl = file?.url || file?.data?.attributes?.url || file?.data?.url;
             const fullUrl = getStrapiMedia(mediaUrl);
@@ -67,7 +98,6 @@ function ComponentRenderer({ block }: { block: any }) {
             );
 
         case "quote":
-            // "Shared.quote" コンポーネント
             return (
                 <blockquote className="my-8 border-l-4 border-primary pl-6 py-2 italic text-xl text-muted-foreground bg-muted/30 rounded-r-lg">
                     <p className="mb-2">"{block.body || block.quote || block.text}"</p>
@@ -78,7 +108,6 @@ function ComponentRenderer({ block }: { block: any }) {
             );
 
         case "slider":
-            // "Shared.slider" コンポーネント (簡易的に最初の画像、またはグリッドで表示)
             const files = block.files?.data || block.files || [];
             if (!Array.isArray(files) || files.length === 0) return null;
             return (
