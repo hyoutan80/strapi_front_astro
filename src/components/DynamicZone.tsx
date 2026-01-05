@@ -99,7 +99,7 @@ function ComponentRenderer({ block }: { block: any }) {
                                 // 画像の角丸対応
                                 img: ({ node, ...props }) => (
                                     <div className="my-8 overflow-hidden rounded-xl border border-border/40">
-                                        <img className="w-full h-auto object-cover" {...props} />
+                                        <img className="w-full h-auto object-cover rounded-xl" {...props} />
                                     </div>
                                 ),
                                 // リンクなどのスタイル調整
@@ -122,7 +122,7 @@ function ComponentRenderer({ block }: { block: any }) {
             if (!fullUrl) return null;
             return (
                 <figure className="my-8 space-y-2">
-                    <div className="overflow-hidden rounded-xl border border-border/40">
+                    <div className="overflow-hidden rounded-xl border border-border/40 relative">
                         <Image
                             src={fullUrl}
                             alt={file?.alternativeText || ""}

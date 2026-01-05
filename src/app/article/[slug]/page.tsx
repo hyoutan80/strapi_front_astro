@@ -128,7 +128,7 @@ export default async function ArticlePage({
                                 alt={title}
                                 fill
                                 priority
-                                className="object-cover"
+                                className="object-cover rounded-xl"
                             />
                         </div>
                     )}

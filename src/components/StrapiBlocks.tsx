@@ -71,7 +71,7 @@ function BlockRenderer({ block }: { block: any }) {
             const imageUrl = getStrapiMedia(imgUrl);
             if (!imageUrl) return null;
             return (
-                <div className="my-8 overflow-hidden rounded-xl border border-border/40">
+                <div className="my-8 overflow-hidden rounded-xl border border-border/40 relative">
                     <Image
                         src={imageUrl}
                         alt={block.image.alternativeText || ""}
