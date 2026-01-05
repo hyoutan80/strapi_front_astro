@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+
 import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -81,6 +83,18 @@ function ComponentRenderer({ block }: { block: any }) {
                                 h3: ({ node, children, ...props }) => {
                                     const { id, cleanText } = extractId(children);
                                     return <h3 id={id} {...props}>{cleanText}</h3>;
+                                },
+                                // pタグ内にdivが入ってハイドレーションエラーになるのを防ぐ
+                                p: ({ node, children, ...props }) => {
+                                    // 子要素に画像(img)が含まれているかチェック
+                                    const hasImage = React.Children.toArray(children).some(
+                                        (child: any) => child.type === 'img' || (child.props && child.props.node && child.props.node.tagName === 'img')
+                                    );
+
+                                    if (hasImage) {
+                                        return <div {...props}>{children}</div>;
+                                    }
+                                    return <p {...props}>{children}</p>;
                                 },
                                 // 画像の角丸対応
                                 img: ({ node, ...props }) => (
