@@ -1,5 +1,5 @@
 ---
-// 宇宙背景アニメーションコンポーネント
+// 宇宙背景アニメーションコンポーネント（Digital Voyage）
 ---
 
 <div id="space-hero-container" class="relative w-full min-h-[400px] overflow-hidden rounded-3xl border border-border/40 bg-black mb-12">
@@ -10,41 +10,124 @@
 </div>
 
 <script>
+    // 3D的な星のクラス
     class Star {
-        x: number = 0;
-        y: number = 0;
-        size: number = 0;
-        speed: number = 0;
+        x: number;
+        y: number;
+        z: number;
         width: number;
         height: number;
+        cx: number;
+        cy: number;
 
         constructor(width: number, height: number) {
             this.width = width;
             this.height = height;
-            this.reset();
+            this.cx = width / 2;
+            this.cy = height / 2;
+            this.reset(true);
         }
 
-        reset() {
-            this.x = Math.random() * this.width * 1.5;
-            this.y = Math.random() * -this.height;
-            this.size = Math.random() * 2;
-            this.speed = Math.random() * 2 + 0.5;
+        reset(initial: boolean = false) {
+            this.x = (Math.random() - 0.5) * this.width * 2;
+            this.y = (Math.random() - 0.5) * this.height * 2;
+            // 初期配置はランダムな奥行き、リセット時は奥から
+            this.z = initial ? Math.random() * this.width : this.width; 
         }
 
-        update() {
-            this.x -= this.speed;
-            this.y += this.speed;
-
-            if (this.x < -10 || this.y > this.height + 10) {
+        update(speed: number) {
+            this.z -= speed;
+            if (this.z <= 0) {
                 this.reset();
             }
         }
 
         draw(ctx: CanvasRenderingContext2D) {
-            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+            // 遠近法投影
+            const scale = 300 / this.z; // 焦点距離のようなもの
+            const screenX = this.cx + this.x * scale;
+            const screenY = this.cy + this.y * scale;
+
+            // 画面外なら描画しない（ただし線の描画のため少し余裕を持たせる）
+            if (screenX < 0 || screenX > this.width || screenY < 0 || screenY > this.height) {
+                return;
+            }
+
+            const size = Math.max(0.5, (1 - this.z / this.width) * 3);
+            const opacity = Math.min(1, (1 - this.z / this.width) * 1.5);
+
+            ctx.fillStyle = `rgba(200, 230, 255, ${opacity})`;
             ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.arc(screenX, screenY, size, 0, Math.PI * 2);
             ctx.fill();
+        }
+    }
+
+    // デジタルグリッド（大地/船の甲板）
+    class DigitalGrid {
+        offset: number = 0;
+        width: number;
+        height: number;
+        speed: number;
+
+        constructor(width: number, height: number, speed: number) {
+            this.width = width;
+            this.height = height;
+            this.speed = speed;
+        }
+
+        update() {
+            this.offset = (this.offset + this.speed) % 100;
+        }
+
+        draw(ctx: CanvasRenderingContext2D) {
+            const centerY = this.height / 2;
+            const centerX = this.width / 2;
+            const horizonY = this.height * 0.8; // グリッドの消失点より少し下
+
+            ctx.save();
+            // 下半分にクリッピング
+            ctx.beginPath();
+            ctx.rect(0, centerY + 50, this.width, this.height);
+            ctx.clip();
+
+            // グロー効果
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = "rgba(0, 255, 255, 0.3)";
+            ctx.strokeStyle = "rgba(0, 200, 255, 0.15)";
+            ctx.lineWidth = 1;
+
+            // 放射線（奥行き線）
+            const lines = 12;
+            for (let i = 0; i <= lines; i++) {
+                // 画面下部におけるX座標
+                const x = (this.width / lines) * i;
+                // 消失点（画面中央）に向かって線を引く
+                ctx.beginPath();
+                ctx.moveTo(x + (x - centerX) * 2, this.height); // 手前を広げる
+                ctx.lineTo(centerX, centerY);
+                ctx.stroke();
+            }
+
+            // 横線（迫ってくる線）
+            // 遠近感を出すために指数関数的に間隔を空ける
+            for (let i = 0; i < 20; i++) {
+                const z = 1000 / (i * 50 + (100 - this.offset) + 100); 
+                const y = centerY + (200 * z); // 簡易的な投影
+
+                if (y > this.height) continue;
+                if (y < centerY) continue;
+
+                const alpha = Math.min(1, (y - centerY) / (this.height - centerY)); // 遠くは薄く
+
+                ctx.strokeStyle = `rgba(0, 200, 255, ${alpha * 0.3})`;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(this.width, y);
+                ctx.stroke();
+            }
+            
+            ctx.restore();
         }
     }
 
@@ -61,81 +144,58 @@
         canvas.width = width;
         canvas.height = height;
 
+        // 星々 (Ship movement)
         const stars: Star[] = [];
-        const starCount = 100;
-
+        const starCount = 300;
         for (let i = 0; i < starCount; i++) {
             stars.push(new Star(width, height));
         }
 
-        function drawPlanet() {
-            if (!ctx) return;
-            const centerX = width / 2;
-            const centerY = height / 2;
-            const radius = Math.min(width, height) * 0.25;
+        // グリッド (Web3 Platform)
+        const grid = new DigitalGrid(width, height, 2);
 
-            ctx.save();
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-            ctx.stroke();
-
-            // グロー効果を控えめに設定（パフォーマンスと上品さのため）
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = "rgba(255, 255, 255, 0.1)";
-            ctx.restore();
-        }
-
-        function drawEarthHorizon() {
-            if (!ctx) return;
-            const centerX = width / 2;
-            // 画面サイズに基づいて半径と位置を計算
-            const earthRadius = Math.max(width, height) * 1.8;
-            const visibleHeight = Math.min(height * 0.2, 150); // 画面下部から最大150pxまで表示
-            const centerY = height + earthRadius - visibleHeight;
-
-            ctx.save();
-            
-            // 大気圏のグロー効果（青白い光）
-            ctx.shadowBlur = 80;
-            ctx.shadowColor = "rgba(60, 150, 255, 0.5)";
-
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, earthRadius, 0, Math.PI * 2);
-
-            // 地球本体の塗りつぶし（宇宙の黒より少しだけ明るい深い青）
-            ctx.fillStyle = "#030712"; 
-            ctx.fill();
-            
-            // 地平線のライン
-            ctx.strokeStyle = "rgba(100, 200, 255, 0.4)";
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-
-            ctx.restore();
+        function drawCore() {
+             // 中央の「未来」を示すコア
+             const centerX = width / 2;
+             const centerY = height / 2;
+             
+             ctx.save();
+             // 強いグロー
+             ctx.shadowBlur = 60;
+             ctx.shadowColor = "rgba(100, 200, 255, 0.8)";
+             ctx.fillStyle = "#fff";
+             
+             ctx.beginPath();
+             ctx.arc(centerX, centerY, 2, 0, Math.PI * 2);
+             ctx.fill();
+             ctx.restore();
         }
 
         function animate() {
             if (!ctx) return;
-            ctx.clearRect(0, 0, width, height);
             
-            // 背景の塗りつぶし（黒）
-            ctx.fillStyle = "#000";
+            // 残像効果（少し透過した黒で塗りつぶす）
+            ctx.fillStyle = "rgba(0, 5, 10, 0.4)"; 
             ctx.fillRect(0, 0, width, height);
+            
+            // 描画モード：加算（光らせる）
+            ctx.globalCompositeOperation = 'lighter';
 
-            // 星の描画
+            // グリッドの更新と描画
+            grid.update();
+            grid.draw(ctx);
+
+            // 星の更新と描画
+            const speed = 15; // ワープ速度
             stars.forEach(star => {
-                star.update();
+                star.update(speed);
                 star.draw(ctx);
             });
 
-            // 惑星（中央の円）の描画
-            drawPlanet();
+            // 中央コア
+            drawCore();
 
-            // 大地の弧の描画 in animate
-            drawEarthHorizon();
-
+            ctx.globalCompositeOperation = 'source-over';
             requestAnimationFrame(animate);
         }
 
@@ -144,26 +204,21 @@
             height = container.clientHeight;
             canvas.width = width;
             canvas.height = height;
-            // 星の位置も再調整
-            stars.forEach(star => {
-                star.width = width;
-                star.height = height;
-            });
+            stars.forEach(s => { s.width = width; s.height = height; s.cx = width/2; s.cy = height/2; });
+            grid.width = width; grid.height = height;
         };
 
         window.addEventListener('resize', handleResize);
         animate();
     }
 
-    // Astro のライフサイクルに合わせて実行
     initCanvas();
     document.addEventListener('astro:page-load', initCanvas);
 </script>
 
 <style>
-    /* 既存の Tailwind との競合を避けつつスタイルを適用 */
     #space-hero-container {
-        /* ガラス状の反射効果などを追加しても良い */
-        box-shadow: 0 0 40px -10px rgba(0,0,0,0.5);
+        box-shadow: 0 0 50px -10px rgba(0, 100, 255, 0.2);
+        background: radial-gradient(circle at center, #0a0a2a 0%, #000 100%);
     }
 </style>
