@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import ArticleCard from '../components/ArticleCard.astro';
 import AdCard from '../components/AdCard.astro';
 import PopularArticles from '../components/PopularArticles.astro';
+import SpaceBackground from '../components/SpaceBackground.astro';
 import { fetchAPI } from '../lib/strapi';
 import type { Article, Advertisement } from '../types';
 
@@ -103,12 +104,11 @@ for (let i = 0; i < finalContent.length; i++) {
 if (autoAdIndex === 0 && autoAds.length > 0 && finalContent.length > 0) {
   finalContent.push(autoAds[0]);
 }
-import SpaceBackground from '../components/SpaceBackground.astro';
 ---
 
 <Layout title="Web3Ships">
   <div class="flex flex-col gap-12">
-    {/* Hero Section with Space Animation */}
+    <!-- Hero Section with Space Animation -->
     <SpaceBackground>
       <h1 class="text-4xl font-extrabold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary animate-gradient-x">
         Explore the Future
@@ -118,10 +118,10 @@ import SpaceBackground from '../components/SpaceBackground.astro';
       </p>
     </SpaceBackground>
 
-    {/* Main Content Layout */}
+    <!-- Main Content Layout -->
     <div class="grid grid-cols-1 gap-12 lg:grid-cols-12 items-start">
 
-      {/* Latest Articles */}
+      <!-- Latest Articles -->
       <div class="lg:col-span-8">
         <div class="flex items-center justify-between mb-8">
           <h2 class="text-3xl font-bold tracking-tight">Latest Articles</h2>
@@ -129,13 +129,13 @@ import SpaceBackground from '../components/SpaceBackground.astro';
 
         {finalContent.length > 0 ? (
           <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
-            {finalContent.map((item: any) => {
-              if ('htmlCode' in item) {
-                return <AdCard ad={item as Advertisement} />;
-              } else {
-                return <ArticleCard article={item as Article} />;
-              }
-            })}
+            {finalContent.map((item: any) => 
+               'htmlCode' in item ? (
+                <AdCard ad={item as Advertisement} />
+              ) : (
+                <ArticleCard article={item as Article} />
+              )
+            )}
           </div>
         ) : (
           <div class="flex h-40 w-full flex-col items-center justify-center rounded-lg border border-dashed text-center">
@@ -147,7 +147,7 @@ import SpaceBackground from '../components/SpaceBackground.astro';
         )}
       </div>
 
-      {/* Sidebar */}
+      <!-- Sidebar -->
       <aside class="lg:col-span-4 space-y-8 sticky top-24">
         <PopularArticles />
       </aside>
