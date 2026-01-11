@@ -103,19 +103,20 @@ for (let i = 0; i < finalContent.length; i++) {
 if (autoAdIndex === 0 && autoAds.length > 0 && finalContent.length > 0) {
   finalContent.push(autoAds[0]);
 }
+import SpaceBackground from '../components/SpaceBackground.astro';
 ---
 
 <Layout title="Web3Ships">
   <div class="flex flex-col gap-12">
-    {/* Hero Section */}
-    <section class="flex flex-col items-center justify-center space-y-4 text-center pt-8 pb-12">
+    {/* Hero Section with Space Animation */}
+    <SpaceBackground>
       <h1 class="text-4xl font-extrabold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary animate-gradient-x">
         Explore the Future
       </h1>
-      <p class="max-w-[700px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+      <p class="max-w-[700px] text-white/80 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
         Tech, Culture, and Modern Methodologies. A collection of thoughts and experiments.
       </p>
-    </section>
+    </SpaceBackground>
 
     {/* Main Content Layout */}
     <div class="grid grid-cols-1 gap-12 lg:grid-cols-12 items-start">
@@ -128,7 +129,7 @@ if (autoAdIndex === 0 && autoAds.length > 0 && finalContent.length > 0) {
 
         {finalContent.length > 0 ? (
           <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
-            {finalContent.map((item: any, index: number) => {
+            {finalContent.map((item: any) => {
               if ('htmlCode' in item) {
                 return <AdCard ad={item as Advertisement} />;
               } else {

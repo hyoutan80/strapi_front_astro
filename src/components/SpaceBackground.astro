@@ -1,0 +1,137 @@
+---
+// 宇宙背景アニメーションコンポーネント
+---
+
+<div id="space-hero-container" class="relative w-full min-h-[400px] overflow-hidden rounded-3xl border border-border/40 bg-black mb-12">
+    <canvas id="space-canvas" class="absolute top-0 left-0 w-full h-full"></canvas>
+    <div class="relative z-10 flex flex-col items-center justify-center h-full py-16 px-4 text-center pointer-events-none">
+        <slot />
+    </div>
+</div>
+
+<script>
+    class Star {
+        x: number = 0;
+        y: number = 0;
+        size: number = 0;
+        speed: number = 0;
+        width: number;
+        height: number;
+
+        constructor(width: number, height: number) {
+            this.width = width;
+            this.height = height;
+            this.reset();
+        }
+
+        reset() {
+            this.x = Math.random() * this.width * 1.5;
+            this.y = Math.random() * -this.height;
+            this.size = Math.random() * 2;
+            this.speed = Math.random() * 2 + 0.5;
+        }
+
+        update() {
+            this.x -= this.speed;
+            this.y += this.speed;
+
+            if (this.x < -10 || this.y > this.height + 10) {
+                this.reset();
+            }
+        }
+
+        draw(ctx: CanvasRenderingContext2D) {
+            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function initCanvas() {
+        const container = document.getElementById('space-hero-container');
+        const canvas = document.getElementById('space-canvas') as HTMLCanvasElement;
+        if (!container || !canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        let width = container.clientWidth;
+        let height = container.clientHeight;
+        canvas.width = width;
+        canvas.height = height;
+
+        const stars: Star[] = [];
+        const starCount = 100;
+
+        for (let i = 0; i < starCount; i++) {
+            stars.push(new Star(width, height));
+        }
+
+        function drawPlanet() {
+            if (!ctx) return;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = Math.min(width, height) * 0.25;
+
+            ctx.save();
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // グロー効果を控えめに設定（パフォーマンスと上品さのため）
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = "rgba(255, 255, 255, 0.1)";
+            ctx.restore();
+        }
+
+        function animate() {
+            if (!ctx) return;
+            ctx.clearRect(0, 0, width, height);
+            
+            // 背景の塗りつぶし（黒）
+            ctx.fillStyle = "#000";
+            ctx.fillRect(0, 0, width, height);
+
+            // 星の描画
+            stars.forEach(star => {
+                star.update();
+                star.draw(ctx);
+            });
+
+            // 惑星の描画
+            drawPlanet();
+
+            requestAnimationFrame(animate);
+        }
+
+        const handleResize = () => {
+            width = container.clientWidth;
+            height = container.clientHeight;
+            canvas.width = width;
+            canvas.height = height;
+            // 星の位置も再調整
+            stars.forEach(star => {
+                star.width = width;
+                star.height = height;
+            });
+        };
+
+        window.addEventListener('resize', handleResize);
+        animate();
+    }
+
+    // Astro のライフサイクルに合わせて実行
+    initCanvas();
+    document.addEventListener('astro:page-load', initCanvas);
+</script>
+
+<style>
+    /* 既存の Tailwind との競合を避けつつスタイルを適用 */
+    #space-hero-container {
+        /* ガラス状の反射効果などを追加しても良い */
+        box-shadow: 0 0 40px -10px rgba(0,0,0,0.5);
+    }
+</style>
