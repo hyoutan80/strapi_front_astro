@@ -1,8 +1,4 @@
-"use client";
-
 import React from "react";
-
-import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { getStrapiMedia } from "@/lib/strapi";
@@ -123,13 +119,13 @@ function ComponentRenderer({ block }: { block: any }) {
             return (
                 <figure className="my-8 space-y-2">
                     <div className="overflow-hidden rounded-xl border border-border/40 relative">
-                        <Image
+                        <img
                             src={fullUrl}
                             alt={file?.alternativeText || ""}
                             width={file?.width || 1200}
                             height={file?.height || 675}
-                            layout="responsive"
-                            className="object-cover rounded-xl"
+                            loading="lazy"
+                            className="w-full h-auto object-cover rounded-xl"
                         />
                     </div>
                     {block.caption && (

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { ChevronRight, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,10 +18,10 @@ export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
         <nav aria-label="breadcrumb" className={cn("flex items-center text-sm text-muted-foreground", className)}>
             <ol className="flex items-center space-x-2">
                 <li>
-                    <Link href="/" className="flex items-center hover:text-foreground transition-colors">
+                    <a href="/" className="flex items-center hover:text-foreground transition-colors">
                         <Home className="h-4 w-4" />
                         <span className="sr-only">Home</span>
-                    </Link>
+                    </a>
                 </li>
 
                 {items.map((item, index) => {
@@ -36,9 +35,9 @@ export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
                                     {item.label}
                                 </span>
                             ) : item.href ? (
-                                <Link href={item.href} className="hover:text-foreground transition-colors line-clamp-1 max-w-[150px] sm:max-w-none">
+                                <a href={item.href} className="hover:text-foreground transition-colors line-clamp-1 max-w-[150px] sm:max-w-none">
                                     {item.label}
-                                </Link>
+                                </a>
                             ) : (
                                 <span>{item.label}</span>
                             )}

@@ -1,0 +1,91 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import ArticleCard from "../../components/ArticleCard.astro";
+import PopularArticles from "../../components/PopularArticles.astro";
+import { fetchAPI } from "../../lib/strapi";
+import { Breadcrumbs } from "../../components/Breadcrumbs.tsx";
+import type { Article } from "../../types";
+
+export async function getStaticPaths() {
+    const path = `/categories`;
+    const token = import.meta.env.STRAPI_API_TOKEN;
+    const options = { headers: { Authorization: `Bearer ${token}` } };
+    const responseData = await fetchAPI(path, {}, options);
+    
+    return responseData.data.map((category: any) => ({
+        params: { category: category.slug },
+    }));
+}
+
+const { category: categorySlug } = Astro.params;
+
+async function getCategoryData(slug: string) {
+    const path = `/categories`;
+    const urlParamsObject = {
+        filters: { slug: { $eq: slug } },
+    };
+    const token = import.meta.env.STRAPI_API_TOKEN;
+    const options = { headers: { Authorization: `Bearer ${token}` } };
+    const responseData = await fetchAPI(path, urlParamsObject, options);
+    return responseData?.data?.[0];
+}
+
+async function getArticlesByCategory(slug: string) {
+    const path = `/articles`;
+    const urlParamsObject = {
+        filters: { category: { slug: { $eq: slug } } },
+        sort: ["display_date:desc", "publishedAt:desc"],
+        populate: {
+            cover: { fields: ["url"] },
+            category: { populate: "*" },
+        },
+    };
+    const token = import.meta.env.STRAPI_API_TOKEN;
+    const options = { headers: { Authorization: `Bearer ${token}` } };
+    const responseData = await fetchAPI(path, urlParamsObject, options);
+    return responseData?.data || [];
+}
+
+const category = await getCategoryData(categorySlug!);
+const articles = await getArticlesByCategory(categorySlug!);
+
+if (!category) {
+    return Astro.rewrite("/404");
+}
+---
+
+<Layout title={`${category.name} - Blog`} description={category.description}>
+    <div class="flex flex-col gap-8">
+        <Breadcrumbs client:load items={[{ label: category.name }]} />
+        <section class="flex flex-col items-center justify-center space-y-4 text-center pt-4 pb-12">
+            <h1 class="text-4xl font-extrabold tracking-tighter sm:text-5xl md:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
+                {category.name}
+            </h1>
+            {category.description && (
+                <p class="max-w-[700px] text-muted-foreground md:text-xl/relaxed">
+                    {category.description}
+                </p>
+            )}
+        </section>
+
+        <div class="grid grid-cols-1 gap-12 lg:grid-cols-12 items-start">
+            <div class="lg:col-span-8">
+                {articles.length > 0 ? (
+                    <div class="grid gap-6 sm:grid-cols-2">
+                        {articles.map((article: Article) => (
+                            <ArticleCard article={article} />
+                        ))}
+                    </div>
+                ) : (
+                    <div class="flex h-40 w-full flex-col items-center justify-center rounded-lg border border-dashed text-center">
+                        <h3 class="text-lg font-bold">No articles found in this category</h3>
+                    </div>
+                )}
+            </div>
+
+            <aside class="lg:col-span-4 space-y-8 sticky top-24">
+                <PopularArticles categorySlug={categorySlug} />
+            </aside>
+        </div>
+    </div>
+</Layout>

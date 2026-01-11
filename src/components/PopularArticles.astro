@@ -1,0 +1,69 @@
+---
+import { type Article } from "../types";
+import { fetchAPI } from "../lib/strapi";
+
+interface Props {
+    categorySlug?: string;
+}
+
+const { categorySlug } = Astro.props;
+
+async function getPopularArticles(categorySlug?: string) {
+    const path = `/articles`;
+    const urlParamsObject: any = {
+        sort: ["views:desc", "display_date:desc", "publishedAt:desc"],
+        pagination: {
+            page: 1,
+            pageSize: 5,
+        },
+        fields: ["title", "slug", "views"],
+    };
+
+    if (categorySlug) {
+        urlParamsObject.filters = {
+            category: {
+                slug: {
+                    $eq: categorySlug,
+                },
+            },
+        };
+    }
+
+    const token = import.meta.env.STRAPI_API_TOKEN;
+    const options = { headers: { Authorization: `Bearer ${token}` } };
+    const responseData = await fetchAPI(path, urlParamsObject, options);
+    return responseData?.data || [];
+}
+
+const articles = await getPopularArticles(categorySlug);
+---
+
+{articles && articles.length > 0 && (
+    <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+        <div class="flex flex-col space-y-1.5 p-6">
+            <h3 class="font-semibold leading-none tracking-tight">Popular Articles</h3>
+        </div>
+        <div class="p-6 pt-0">
+            <ul class="space-y-4">
+                {articles.map((article: Article, index: number) => (
+                    <li class="flex items-start gap-3">
+                        <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+                            {index + 1}
+                        </span>
+                        <div class="space-y-1">
+                            <a
+                                href={`/article/${article.slug}`}
+                                class="font-medium leading-none hover:underline line-clamp-2"
+                            >
+                                {article.title}
+                            </a>
+                            <p class="text-xs text-muted-foreground">
+                                {article.views || 0} views
+                            </p>
+                        </div>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    </div>
+)}

@@ -1,6 +1,3 @@
-"use client";
-
-import Image from "next/image";
 import { getStrapiMedia } from "@/lib/strapi";
 
 interface StrapiBlocksProps {
@@ -72,13 +69,13 @@ function BlockRenderer({ block }: { block: any }) {
             if (!imageUrl) return null;
             return (
                 <div className="my-8 overflow-hidden rounded-xl border border-border/40 relative">
-                    <Image
+                    <img
                         src={imageUrl}
                         alt={block.image.alternativeText || ""}
                         width={block.image.width || 800}
                         height={block.image.height || 450}
-                        layout="responsive"
-                        className="object-cover rounded-xl"
+                        loading="lazy"
+                        className="w-full h-auto object-cover rounded-xl"
                     />
                 </div>
             );

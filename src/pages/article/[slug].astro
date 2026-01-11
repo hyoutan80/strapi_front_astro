@@ -1,0 +1,169 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { fetchAPI, getStrapiMedia } from "../../lib/strapi";
+import { format, differenceInYears } from "date-fns";
+import { Breadcrumbs } from "../../components/Breadcrumbs.tsx";
+import { AdBanner } from "../../components/AdBanner.tsx";
+import { processContentWithToc } from "../../lib/toc";
+import { TableOfContents } from "../../components/TableOfContents.tsx";
+import PopularArticles from "../../components/PopularArticles.astro";
+import { DynamicZone } from "../../components/DynamicZone.tsx";
+import { ViewCounter } from "../../components/ViewCounter.tsx";
+
+export async function getStaticPaths() {
+    const path = `/articles`;
+    const urlParamsObject = {
+        fields: ["slug"],
+        pagination: { pageSize: 100 },
+    };
+    const token = import.meta.env.STRAPI_API_TOKEN;
+    const options = { headers: { Authorization: `Bearer ${token}` } };
+    const responseData = await fetchAPI(path, urlParamsObject, options);
+    
+    return responseData.data.map((article: any) => ({
+        params: { slug: article.slug },
+    }));
+}
+
+const { slug } = Astro.params;
+
+async function getArticle(slug: string) {
+    const path = `/articles`;
+    const urlParamsObject = {
+        filters: { slug: { $eq: slug } },
+        populate: {
+            cover: { fields: ["url"] },
+            category: { populate: "*" },
+            blocks: {
+                populate: "*",
+            },
+        },
+    };
+    const token = import.meta.env.STRAPI_API_TOKEN;
+    const options = { headers: { Authorization: `Bearer ${token}` } };
+    const responseData = await fetchAPI(path, urlParamsObject, options);
+    return responseData?.data?.[0];
+}
+
+async function getAds() {
+    try {
+        const token = import.meta.env.STRAPI_API_TOKEN;
+        const path = `/advertisements`;
+        const urlParamsObject = {
+            filters: { format: { $eq: "banner" } },
+            pagination: { pageSize: 2 },
+        };
+        const options = { headers: { Authorization: `Bearer ${token}` } };
+        const responseData = await fetchAPI(path, urlParamsObject, options);
+        return responseData?.data || [];
+    } catch (error) {
+        console.error("Failed to fetch ads:", error);
+        return [];
+    }
+}
+
+const article = await getArticle(slug);
+const ads = await getAds();
+
+if (!article) {
+    return Astro.rewrite("/404");
+}
+
+const articleData = article.attributes || article;
+const { title, content, publishedAt, cover, category, views, blocks, display_date } = articleData;
+const displayDate = display_date || publishedAt;
+
+const rawContentSource = (blocks && Array.isArray(blocks) && blocks.length > 0)
+    ? blocks
+    : (articleData.content || content);
+
+const { content: processedContent, headings } = processContentWithToc(rawContentSource);
+
+const coverData = cover as any;
+const coverUrl = coverData?.url || coverData?.data?.attributes?.url || coverData?.data?.url;
+const imageUrl = getStrapiMedia(coverUrl);
+
+const categoryData = category as any;
+const categoryName = categoryData?.name || categoryData?.data?.attributes?.name || categoryData?.data?.name;
+const categorySlug = categoryData?.slug || categoryData?.data?.attributes?.slug || categoryData?.data?.slug;
+
+const breadcrumbItems = [];
+if (categoryName && categorySlug) {
+    breadcrumbItems.push({ label: categoryName, href: `/blog/${categorySlug}` });
+}
+breadcrumbItems.push({ label: title });
+
+const isOldArticle = displayDate ? differenceInYears(new Date(), new Date(displayDate)) >= 1 : false;
+---
+
+<Layout title={title} description={articleData.description}>
+    <div class="w-full">
+        <div class="grid grid-cols-1 gap-12 lg:grid-cols-12 items-start">
+            {/* Main Content */}
+            <article class="lg:col-span-8">
+                <Breadcrumbs client:load items={breadcrumbItems} className="mb-6" />
+                <header class="mb-8">
+                    <h1 class="text-3xl font-extrabold leading-tight tracking-tighter md:text-5xl lg:text-5xl mb-4">
+                        {title}
+                    </h1>
+                    <div class="flex items-center space-x-2">
+                        <span class="rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
+                            {categoryName}
+                        </span>
+                        {displayDate && (
+                            <time class="text-sm text-muted-foreground">
+                                {format(new Date(displayDate), "MMMM dd, yyyy")}
+                            </time>
+                        )}
+                        <ViewCounter client:load slug={slug} initialViews={views} />
+                    </div>
+                </header>
+
+                {isOldArticle && (
+                    <div class="mb-8 p-6 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900/30 text-amber-800 dark:text-amber-200/80">
+                        <p class="text-sm leading-relaxed">
+                            以下の記事は、執筆から1年以上を経過しており、情報が古い可能性があります。折を見て記事の見直しをする予定ですが、読み進める場合は、その点をご了承ください。
+                        </p>
+                    </div>
+                )}
+
+                {imageUrl && (
+                    <div class="relative aspect-video w-full overflow-hidden rounded-xl border border-border/40 bg-muted mb-10">
+                        <img
+                            src={imageUrl}
+                            alt={title}
+                            class="object-cover w-full h-full rounded-xl"
+                            loading="eager"
+                        />
+                    </div>
+                )}
+
+                {/* Mobile Table of Contents */}
+                {headings.length > 0 && (
+                    <TableOfContents client:load items={headings} className="mb-8 lg:hidden" />
+                )}
+
+                <div class="prose prose-lg dark:prose-invert prose-stone mx-auto max-w-none">
+                    {Array.isArray(processedContent) ? (
+                        <DynamicZone client:load blocks={processedContent} />
+                    ) : typeof processedContent === 'string' ? (
+                        <div set:html={processedContent} />
+                    ) : (
+                        <p class="italic text-muted-foreground">コンテンツを読み込めませんでした。</p>
+                    )}
+                </div>
+
+                {/* Bottom Banner Ad */}
+                {ads.length > 0 && <AdBanner client:load ad={ads[1] || ads[0]} className="mt-12" />}
+            </article>
+
+            {/* Sidebar */}
+            <aside class="hidden lg:block lg:col-span-4 space-y-8 sticky top-24">
+                {headings.length > 0 && (
+                    <TableOfContents client:load items={headings} />
+                )}
+                <PopularArticles categorySlug={categorySlug} />
+            </aside>
+        </div>
+    </div>
+</Layout>

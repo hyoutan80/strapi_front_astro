@@ -1,0 +1,32 @@
+---
+import { type Advertisement } from "../types";
+import { cn } from "../lib/utils";
+
+interface Props {
+    ad: Advertisement;
+    className?: string;
+}
+
+const { ad, className } = Astro.props;
+const adData = ad.attributes || ad;
+---
+
+<div
+    id={adData.placementId}
+    class={cn(
+        "flex flex-col h-full overflow-hidden rounded-xl border-2 border-muted bg-muted/20",
+        className
+    )}
+>
+    <div class="flex-1 w-full relative overflow-hidden flex items-center justify-center rounded-b-xl">
+        <div
+            class="ad-container w-full h-full flex items-center justify-center [&_iframe]:!w-full [&_iframe]:!h-full [&_img]:!w-full [&_img]:!h-full [&_img]:!object-cover [&_a]:!w-full [&_a]:!h-full [&_a]:!flex [&_a]:!items-center [&_a]:!justify-center"
+            set:html={adData.htmlCode}
+        />
+    </div>
+    <div class="p-1 px-2 text-right bg-muted/30 border-t border-muted/20 shrink-0">
+        <span class="text-[10px] uppercase tracking-widest text-muted-foreground/70">
+            Sponsored
+        </span>
+    </div>
+</div>

@@ -1,0 +1,156 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import AdCard from '../components/AdCard.astro';
+import PopularArticles from '../components/PopularArticles.astro';
+import { fetchAPI } from '../lib/strapi';
+import type { Article, Advertisement } from '../types';
+
+async function getArticles() {
+  try {
+    const token = import.meta.env.STRAPI_API_TOKEN;
+    const path = `/articles`;
+    const urlParamsObject = {
+      sort: ["display_date:desc", "publishedAt:desc"],
+      populate: {
+        cover: { fields: ["url"] },
+        category: { populate: "*" },
+      },
+      pagination: {
+        page: 1,
+        pageSize: 20,
+      },
+    };
+    const options = { headers: { Authorization: `Bearer ${token}` } };
+    const responseData = await fetchAPI(path, urlParamsObject, options);
+    return responseData;
+  } catch (error) {
+    console.error("Failed to fetch articles:", error);
+    return { data: [], meta: {} };
+  }
+}
+
+async function getAds() {
+  try {
+    const token = import.meta.env.STRAPI_API_TOKEN;
+    const path = `/advertisements`;
+    const urlParamsObject = {
+      filters: { format: { $eq: "card" } },
+      pagination: { pageSize: 10 },
+    };
+    const options = { headers: { Authorization: `Bearer ${token}` } };
+    const responseData = await fetchAPI(path, urlParamsObject, options);
+    return responseData?.data || [];
+  } catch (error) {
+    console.error("Failed to fetch ads:", error);
+    return [];
+  }
+}
+
+const { data: articles } = await getArticles();
+const ads = await getAds();
+
+// 1. Separate Ads
+const fixedAds: { ad: Advertisement; index: number }[] = [];
+const autoAds: Advertisement[] = [];
+
+ads.forEach((ad: Advertisement) => {
+  const pid = parseInt(ad.placementId || "", 10);
+  if (!isNaN(pid) && pid > 0) {
+    fixedAds.push({ ad, index: pid - 1 });
+  } else {
+    autoAds.push(ad);
+  }
+});
+
+fixedAds.sort((a, b) => a.index - b.index);
+
+// 2. Initial List (Articles)
+const finalContent: (Article | Advertisement)[] = [...articles];
+
+// 3. Insert Fixed Ads
+fixedAds.forEach(({ ad, index }) => {
+  if (index <= finalContent.length) {
+    finalContent.splice(index, 0, ad);
+  } else {
+    finalContent.push(ad);
+  }
+});
+
+// 4. Insert Auto Ads (Spacing)
+let itemsSinceLastAd = 0;
+let autoAdIndex = 0;
+
+for (let i = 0; i < finalContent.length; i++) {
+  const item = finalContent[i];
+  const isAd = 'htmlCode' in item;
+
+  if (isAd) {
+    itemsSinceLastAd = 0;
+  } else {
+    itemsSinceLastAd++;
+  }
+
+  if (itemsSinceLastAd >= 5 && autoAdIndex < autoAds.length) {
+    const adToInsert = autoAds[autoAdIndex];
+    finalContent.splice(i + 1, 0, adToInsert);
+    itemsSinceLastAd = 0;
+    autoAdIndex++;
+    i++;
+  }
+}
+
+if (autoAdIndex === 0 && autoAds.length > 0 && finalContent.length > 0) {
+  finalContent.push(autoAds[0]);
+}
+---
+
+<Layout title="Web3Ships">
+  <div class="flex flex-col gap-12">
+    {/* Hero Section */}
+    <section class="flex flex-col items-center justify-center space-y-4 text-center pt-8 pb-12">
+      <h1 class="text-4xl font-extrabold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary animate-gradient-x">
+        Explore the Future
+      </h1>
+      <p class="max-w-[700px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+        Tech, Culture, and Modern Methodologies. A collection of thoughts and experiments.
+      </p>
+    </section>
+
+    {/* Main Content Layout */}
+    <div class="grid grid-cols-1 gap-12 lg:grid-cols-12 items-start">
+
+      {/* Latest Articles */}
+      <div class="lg:col-span-8">
+        <div class="flex items-center justify-between mb-8">
+          <h2 class="text-3xl font-bold tracking-tight">Latest Articles</h2>
+        </div>
+
+        {finalContent.length > 0 ? (
+          <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
+            {finalContent.map((item: any, index: number) => {
+              if ('htmlCode' in item) {
+                return <AdCard ad={item as Advertisement} />;
+              } else {
+                return <ArticleCard article={item as Article} />;
+              }
+            })}
+          </div>
+        ) : (
+          <div class="flex h-40 w-full flex-col items-center justify-center rounded-lg border border-dashed text-center">
+            <h3 class="text-lg font-bold">No articles found</h3>
+            <p class="text-muted-foreground">
+              Make sure Strapi is running and you have published some content.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Sidebar */}
+      <aside class="lg:col-span-4 space-y-8 sticky top-24">
+        <PopularArticles />
+      </aside>
+
+    </div>
+  </div>
+</Layout>

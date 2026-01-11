@@ -1,0 +1,71 @@
+---
+import { format } from "date-fns";
+import { type Article } from "../types";
+import { getStrapiMedia } from "../lib/strapi";
+import { cn } from "../lib/utils";
+import { ArrowRight } from "lucide-react";
+
+interface Props {
+    article: Article;
+    className?: string;
+}
+
+const { article, className } = Astro.props;
+const articleData = article.attributes || article;
+const { title, slug, publishedAt, cover, category, description, display_date } = articleData;
+const displayDate = display_date || publishedAt;
+
+const coverData = cover as any;
+const coverUrl = coverData?.url || coverData?.data?.attributes?.url || coverData?.data?.url;
+const imageUrl = getStrapiMedia(coverUrl);
+
+const categoryData = category as any;
+const categoryName = categoryData?.name || categoryData?.data?.attributes?.name || categoryData?.data?.name || "Uncategorized";
+---
+
+<a
+    href={`/article/${slug}`}
+    class={cn(
+        "group flex flex-col overflow-hidden rounded-xl border border-border/40 bg-card transition-all hover:shadow-lg hover:border-border/80 h-full",
+        className
+    )}
+>
+    <div class="relative aspect-video w-full overflow-hidden bg-muted">
+        {imageUrl ? (
+            <img
+                src={imageUrl}
+                alt={title}
+                class="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+                loading="lazy"
+                decoding="async"
+            />
+        ) : (
+            <div class="flex h-full w-full items-center justify-center bg-secondary text-muted-foreground">
+                No Image
+            </div>
+        )}
+    </div>
+    <div class="flex flex-1 flex-col p-6">
+        <div class="mb-4 flex items-center justify-between">
+            <span class="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                {categoryName}
+            </span>
+            {displayDate && (
+                <span class="text-xs text-muted-foreground">
+                    {format(new Date(displayDate), "MMM dd, yyyy")}
+                </span>
+            )}
+        </div>
+        <h3 class="mb-2 text-xl font-bold tracking-tight text-card-foreground group-hover:text-primary transition-colors">
+            {title}
+        </h3>
+        {description && (
+            <p class="mb-4 line-clamp-3 text-sm text-muted-foreground">
+                {description}
+            </p>
+        )}
+        <div class="mt-auto flex items-center text-sm font-medium text-primary">
+            Read Article <ArrowRight className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-1" />
+        </div>
+    </div>
+</a>

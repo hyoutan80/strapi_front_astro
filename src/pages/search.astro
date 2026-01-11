@@ -1,0 +1,73 @@
+---
+export const prerender = false;
+
+import Layout from "../layouts/Layout.astro";
+import ArticleCard from "../components/ArticleCard.astro";
+import PopularArticles from "../components/PopularArticles.astro";
+import { fetchAPI } from "../lib/strapi";
+import { Breadcrumbs } from "../components/Breadcrumbs.tsx";
+import type { Article } from "../types";
+
+// Astro handles query params via Astro.url.searchParams
+const query = Astro.url.searchParams.get("q") || "";
+
+async function searchArticles(query: string) {
+    if (!query) return [];
+    
+    const path = `/articles`;
+    const urlParamsObject = {
+        filters: {
+            $or: [
+                { title: { $containsi: query } },
+                { description: { $containsi: query } },
+            ],
+        },
+        populate: {
+            cover: { fields: ["url"] },
+            category: { populate: "*" },
+        },
+    };
+    const token = import.meta.env.STRAPI_API_TOKEN;
+    const options = { headers: { Authorization: `Bearer ${token}` } };
+    const responseData = await fetchAPI(path, urlParamsObject, options);
+    return responseData?.data || [];
+}
+
+const articles = await searchArticles(query);
+console.log(`Search for "${query}" found ${articles.length} articles`);
+---
+
+<Layout title={`Search Results for "${query}"`}>
+    <div class="flex flex-col gap-8">
+        <Breadcrumbs client:load items={[{ label: "Search", href: "/search" }, { label: query }]} />
+        <section class="flex flex-col items-center justify-center space-y-4 text-center pt-4 pb-12">
+            <h1 class="text-4xl font-extrabold tracking-tighter sm:text-5xl md:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
+                Search: {query}
+            </h1>
+            <p class="max-w-[700px] text-muted-foreground md:text-xl/relaxed">
+                {articles.length} results found
+            </p>
+        </section>
+
+        <div class="grid grid-cols-1 gap-12 lg:grid-cols-12 items-start">
+            <div class="lg:col-span-8">
+                {articles.length > 0 ? (
+                    <div class="grid gap-6 sm:grid-cols-2">
+                        {articles.map((article: Article) => (
+                            <ArticleCard article={article} />
+                        ))}
+                    </div>
+                ) : (
+                    <div class="flex h-40 w-full flex-col items-center justify-center rounded-lg border border-dashed text-center">
+                        <h3 class="text-lg font-bold">No results found for "{query}"</h3>
+                        <p class="text-muted-foreground">Try a different keyword.</p>
+                    </div>
+                )}
+            </div>
+
+            <aside class="lg:col-span-4 space-y-8 sticky top-24">
+                <PopularArticles />
+            </aside>
+        </div>
+    </div>
+</Layout>

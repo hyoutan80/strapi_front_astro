@@ -1,0 +1,56 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { Breadcrumbs } from "../components/Breadcrumbs.tsx";
+import PopularArticles from "../components/PopularArticles.astro";
+
+Astro.response.status = 404;
+Astro.response.statusText = 'Not Found';
+---
+
+<Layout title="404 - Page Not Found">
+    <div class="flex flex-col gap-8">
+        <Breadcrumbs client:load items={[{ label: "404 Not Found" }]} />
+        
+        <div class="grid grid-cols-1 gap-12 lg:grid-cols-12 items-start py-12">
+            <div class="lg:col-span-8">
+                <div class="flex flex-col items-center justify-center space-y-6 text-center py-20 bg-muted/20 rounded-3xl border border-border/40">
+                    <div class="relative">
+                        <h1 class="text-9xl font-black text-primary/5 select-none">404</h1>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span class="text-4xl font-extrabold tracking-tighter sm:text-5xl md:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
+                                Oops!
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-2xl font-bold">Page Not Found</h2>
+                        <p class="max-w-[500px] text-muted-foreground mx-auto">
+                            The page you're looking for doesn't exist or has been moved. 
+                            Let's get you back on track.
+                        </p>
+                    </div>
+
+                    <div class="flex flex-wrap gap-4 justify-center pt-4">
+                        <a 
+                            href="/" 
+                            class="inline-flex h-11 items-center justify-center rounded-full bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        >
+                            Return Home
+                        </a>
+                        <a 
+                            href="javascript:history.back()" 
+                            class="inline-flex h-11 items-center justify-center rounded-full border border-input bg-background px-8 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        >
+                            Go Back
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="lg:col-span-4 space-y-8 sticky top-24">
+                <PopularArticles />
+            </aside>
+        </div>
+    </div>
+</Layout>

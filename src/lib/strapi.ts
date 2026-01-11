@@ -1,6 +1,7 @@
 import qs from "qs";
 
-export const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
+// Astro uses import.meta.env for environment variables
+export const STRAPI_URL = import.meta.env.STRAPI_URL || "http://localhost:1337";
 
 export async function fetchAPI(
     path: string,
@@ -8,7 +9,6 @@ export async function fetchAPI(
     options = {}
 ) {
     try {
-        // Merge default and user options
         const mergedOptions = {
             headers: {
                 "Content-Type": "application/json",
@@ -16,17 +16,13 @@ export async function fetchAPI(
             ...options,
         };
 
-        // Build request URL
         const queryString = qs.stringify(urlParamsObject);
-        const requestUrl = `${STRAPI_URL}/api${path}${queryString ? `?${queryString}` : ""
-            }`;
+        const requestUrl = `${STRAPI_URL}/api${path}${queryString ? `?${queryString}` : ""}`;
 
         console.log(`Fetching from: ${requestUrl}`);
 
-        // Trigger API call
         const response = await fetch(requestUrl, mergedOptions);
 
-        // Handle response
         if (!response.ok) {
             console.error(`Error fetching from Strapi: ${response.status} ${response.statusText}`);
             try {
@@ -50,11 +46,9 @@ export function getStrapiMedia(url: string | null) {
         return null;
     }
 
-    // Return the full URL if the media is hosted on an external provider
     if (url.startsWith("http") || url.startsWith("//")) {
         return url;
     }
 
-    // Otherwise prepend the Strapi URL
     return `${STRAPI_URL}${url}`;
 }

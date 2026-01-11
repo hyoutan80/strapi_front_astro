@@ -1,0 +1,108 @@
+---
+import { Rocket, Search, Menu } from "lucide-react";
+import { cn } from "../lib/utils";
+
+const NAV_ITEMS = [
+    { name: "Tech Exploration", href: "/blog/tech-exploration" },
+    { name: "PM & Method", href: "/blog/pm-method" },
+    { name: "Modern Workflow", href: "/blog/modern-workflow" },
+    { name: "Culture & Hobby", href: "/blog/culture-hobby" },
+    { name: "Log / Archive", href: "/blog/log-archive" },
+];
+
+const pathname = Astro.url.pathname;
+---
+
+<header class="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div class="container mx-auto px-4 md:px-6">
+        <div class="flex h-16 items-center justify-between">
+            <a href="/" class="flex items-center space-x-2">
+                <Rocket className="h-6 w-6 text-primary" />
+                <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
+                    Web3Ships
+                </span>
+            </a>
+
+            {/* Desktop Nav */}
+            <nav class="hidden md:flex items-center space-x-6">
+                {NAV_ITEMS.map((item) => (
+                    <a
+                        href={item.href}
+                        class={cn(
+                            "text-sm font-medium transition-colors hover:text-primary",
+                            pathname.startsWith(item.href)
+                                ? "text-foreground"
+                                : "text-muted-foreground"
+                        )}
+                    >
+                        {item.name}
+                    </a>
+                ))}
+            </nav>
+
+            <div class="flex items-center space-x-4">
+                {/* Search Bar - Desktop */}
+                <form action="/search" method="GET" class="hidden lg:flex items-center relative">
+                    <input
+                        type="text"
+                        name="q"
+                        placeholder="Search articles..."
+                        class="h-9 w-40 xl:w-60 rounded-full border border-input bg-background/50 px-4 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all pr-10"
+                    />
+                    <button type="submit" class="absolute right-3 text-muted-foreground hover:text-primary">
+                        <Search className="h-4 w-4" />
+                    </button>
+                </form>
+
+                {/* Mobile Menu Toggle (Simplified for Astro - Client side JS needed for interaction) */}
+                <button
+                    id="mobile-menu-toggle"
+                    class="md:hidden p-2 text-muted-foreground hover:text-foreground"
+                    aria-label="Toggle Menu"
+                >
+                    <Menu className="h-6 w-6" />
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {/* Mobile Nav Drawer (Hidden by default) */}
+    <div id="mobile-menu" class="hidden md:hidden border-t border-border/40 bg-background">
+        <div class="container py-4 flex flex-col space-y-4 px-4">
+            <form action="/search" method="GET" class="flex items-center relative">
+                <input
+                    type="text"
+                    name="q"
+                    placeholder="Search articles..."
+                    class="h-10 w-full rounded-md border border-input bg-background/50 px-4 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 pr-10"
+                />
+                <button type="submit" class="absolute right-3 text-muted-foreground">
+                    <Search className="h-5 w-5" />
+                </button>
+            </form>
+
+            {NAV_ITEMS.map((item) => (
+                <a
+                    href={item.href}
+                    class={cn(
+                        "text-base font-medium transition-colors hover:text-primary",
+                        pathname.startsWith(item.href)
+                            ? "text-foreground"
+                            : "text-muted-foreground"
+                    )}
+                >
+                    {item.name}
+                </a>
+            ))}
+        </div>
+    </div>
+</header>
+
+<script>
+    const toggle = document.getElementById('mobile-menu-toggle');
+    const menu = document.getElementById('mobile-menu');
+    
+    toggle?.addEventListener('click', () => {
+        menu?.classList.toggle('hidden');
+    });
+</script>

@@ -1,8 +1,5 @@
-"use client";
-
 import React, { useCallback, useEffect, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
-import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getStrapiMedia } from "@/lib/strapi";
@@ -51,12 +48,11 @@ export function ImageSlider({ images, className }: ImageSliderProps) {
 
                         return (
                             <div className="flex-[0_0_100%] min-w-0 relative aspect-video" key={index}>
-                                <Image
+                                <img
                                     src={imageUrl}
                                     alt={imgData.alternativeText || `Slide ${index + 1}`}
-                                    fill
-                                    className="object-cover rounded-xl"
-                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
+                                    className="w-full h-full object-cover rounded-xl"
+                                    loading="lazy"
                                 />
                                 {imgData.caption && (
                                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6 pt-12">
