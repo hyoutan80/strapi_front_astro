@@ -1,4 +1,4 @@
-import { defineConfig } from 'astro/config';
+import { defineConfig, passthroughImageService } from 'astro/config';
 import react from '@astrojs/react';
 import tailwind from '@astrojs/tailwind';
 import vercel from '@astrojs/vercel';
@@ -9,8 +9,8 @@ export default defineConfig({
     output: 'hybrid',
     adapter: vercel({
         imageService: true,
-        imagesConfig: {
-            domains: ['cms.web3ships.com'],
-        },
     }),
+    image: {
+        service: passthroughImageService()
+    }
 });
