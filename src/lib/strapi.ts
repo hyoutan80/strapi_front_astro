@@ -1,7 +1,7 @@
 import qs from "qs";
 
 // Astro uses import.meta.env for environment variables
-export const STRAPI_URL = import.meta.env.STRAPI_URL || "http://localhost:1337";
+export const STRAPI_URL = import.meta.env.STRAPI_URL || "https://cms.web3ships.com";
 
 export async function fetchAPI(
     path: string,

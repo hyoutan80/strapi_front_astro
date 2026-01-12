@@ -3,24 +3,28 @@ import { Rocket, Search, Menu } from "lucide-react";
 import { cn } from "../lib/utils";
 
 const NAV_ITEMS = [
-    { name: "Tech Exploration", href: "/blog/tech-exploration" },
-    { name: "PM & Method", href: "/blog/pm-method" },
-    { name: "Modern Workflow", href: "/blog/modern-workflow" },
-    { name: "Culture & Hobby", href: "/blog/culture-hobby" },
-    { name: "Log / Archive", href: "/blog/log-archive" },
+    { name: "Web制作・開発", href: "/blog/web-development" },
+    { name: "AI・Web3", href: "/blog/ai-web3" },
+    { name: "ディレクション", href: "/blog/direction" },
+    { name: "ライフスタイル", href: "/blog/lifestyle" },
 ];
 
 const pathname = Astro.url.pathname;
 ---
 
-<header class="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+<header id="main-header" class="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-transform duration-300">
     <div class="container mx-auto px-4 md:px-6">
         <div class="flex h-16 items-center justify-between">
             <a href="/" class="flex items-center space-x-2">
-                <Rocket className="h-6 w-6 text-primary" />
-                <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
-                    Web3Ships
-                </span>
+                <Rocket className="h-8 w-8 text-primary" />
+                <div class="flex flex-col">
+                    <span class="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent leading-none">
+                        Web3Ships
+                    </span>
+                    <span class="text-[10px] text-muted-foreground leading-tight">
+                        AI開発とWeb制作の技術メディア
+                    </span>
+                </div>
             </a>
 
             {/* Desktop Nav */}
@@ -104,5 +108,31 @@ const pathname = Astro.url.pathname;
     
     toggle?.addEventListener('click', () => {
         menu?.classList.toggle('hidden');
+    });
+
+    // Smart Header Logic
+    let lastScrollY = window.scrollY;
+    const header = document.getElementById('main-header');
+
+    window.addEventListener('scroll', () => {
+        if (!header) return;
+        
+        const currentScrollY = window.scrollY;
+        
+        // Only trigger if scrolled past a threshold to avoid jitter at top
+        if (currentScrollY > 100) {
+            if (currentScrollY > lastScrollY) {
+                // Scrolling DOWN -> Hide
+                header.classList.add('-translate-y-full');
+            } else {
+                // Scrolling UP -> Show
+                header.classList.remove('-translate-y-full');
+            }
+        } else {
+             // Always show at top
+             header.classList.remove('-translate-y-full');
+        }
+
+        lastScrollY = currentScrollY;
     });
 </script>

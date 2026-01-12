@@ -1,0 +1,64 @@
+---
+import { cn } from "../lib/utils";
+import { BookOpen, Monitor, Smartphone, Heart } from "lucide-react";
+
+const categories = [
+  {
+    title: "Web制作・開発",
+    subtitle: "Engine",
+    description: "Strapi / Astro / 制作実績・テンプレート",
+    icon: Monitor,
+    href: "/blog/web-development",
+    color: "text-blue-400",
+  },
+  {
+    title: "AI・Web3",
+    subtitle: "Hyperdrive",
+    description: "Cursor活用術 / DApps開発 / 最新技術",
+    icon: Smartphone, // Using Smartphone as a placeholder for a 'Chip' or AI related icon if not available
+    href: "/blog/ai-web3",
+    color: "text-purple-400",
+  },
+  {
+    title: "ディレクション",
+    subtitle: "Flight Plan",
+    description: "制作管理 / 戦略的SEO / 概念的知見",
+    icon: BookOpen, // Map
+    href: "/blog/direction",
+    color: "text-orange-400",
+  },
+  {
+    title: "ライフスタイル",
+    subtitle: "Life Support",
+    description: "サウナ / 茶道 / 趣味と自己研鑽",
+    icon: Heart,
+    href: "/blog/lifestyle",
+    color: "text-pink-400",
+  },
+];
+---
+
+<section class="py-12 border-y border-white/20 bg-zinc-900/50 backdrop-blur-md my-10">
+  <div class="container mx-auto px-4 max-w-7xl">
+    <div class="text-center mb-8">
+      <h2 class="text-2xl font-bold tracking-tight mb-2">カテゴリー一覧</h2>
+      <p class="text-muted-foreground text-sm">宇宙船の機能から探索してください</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {categories.map((category) => (
+        <a href={category.href} class="group block h-full">
+          <div class="relative h-full overflow-hidden rounded-xl bg-card border border-border/50 p-6 hover:bg-accent/5 transition-all hover:border-primary/50">
+             <div class="mb-4">
+                <span class={cn("flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10", category.color)}>
+                   <category.icon className="w-5 h-5" />
+                </span>
+             </div>
+             <h3 class="font-bold text-lg mb-1">{category.title}</h3>
+             <p class="text-xs text-muted-foreground mb-2 font-mono uppercase tracking-wider">{category.subtitle}</p>
+             <p class="text-xs text-muted-foreground/80 leading-relaxed">{category.description}</p>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>

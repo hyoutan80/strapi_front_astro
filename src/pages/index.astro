@@ -1,11 +1,12 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import ArticleCard from '../components/ArticleCard.astro';
-import AdCard from '../components/AdCard.astro';
-import PopularArticles from '../components/PopularArticles.astro';
 import SpaceBackground from '../components/SpaceBackground.astro';
+import CategoryGrid from '../components/CategoryGrid.astro';
+import AchievementSection from '../components/AchievementSection.astro';
+import ArticleListItem from '../components/ArticleListItem.astro';
+import Sidebar from '../components/Sidebar.astro';
 import { fetchAPI } from '../lib/strapi';
-import type { Article, Advertisement } from '../types';
+import type { Article } from '../types';
 
 async function getArticles() {
   try {
@@ -19,7 +20,7 @@ async function getArticles() {
       },
       pagination: {
         page: 1,
-        pageSize: 20,
+        pageSize: 10, // Limit to 10 for the list view
       },
     };
     const options = { headers: { Authorization: `Bearer ${token}` } };
@@ -31,127 +32,78 @@ async function getArticles() {
   }
 }
 
-async function getAds() {
-  try {
-    const token = import.meta.env.STRAPI_API_TOKEN;
-    const path = `/advertisements`;
-    const urlParamsObject = {
-      filters: { format: { $eq: "card" } },
-      pagination: { pageSize: 10 },
-    };
-    const options = { headers: { Authorization: `Bearer ${token}` } };
-    const responseData = await fetchAPI(path, urlParamsObject, options);
-    return responseData?.data || [];
-  } catch (error) {
-    console.error("Failed to fetch ads:", error);
-    return [];
-  }
-}
-
 const { data: articles } = await getArticles();
-const ads = await getAds();
-
-// 1. Separate Ads
-const fixedAds: { ad: Advertisement; index: number }[] = [];
-const autoAds: Advertisement[] = [];
-
-ads.forEach((ad: Advertisement) => {
-  const pid = parseInt(ad.placementId || "", 10);
-  if (!isNaN(pid) && pid > 0) {
-    fixedAds.push({ ad, index: pid - 1 });
-  } else {
-    autoAds.push(ad);
-  }
-});
-
-fixedAds.sort((a, b) => a.index - b.index);
-
-// 2. Initial List (Articles)
-const finalContent: (Article | Advertisement)[] = [...articles];
-
-// 3. Insert Fixed Ads
-fixedAds.forEach(({ ad, index }) => {
-  if (index <= finalContent.length) {
-    finalContent.splice(index, 0, ad);
-  } else {
-    finalContent.push(ad);
-  }
-});
-
-// 4. Insert Auto Ads (Spacing)
-let itemsSinceLastAd = 0;
-let autoAdIndex = 0;
-
-for (let i = 0; i < finalContent.length; i++) {
-  const item = finalContent[i];
-  const isAd = 'htmlCode' in item;
-
-  if (isAd) {
-    itemsSinceLastAd = 0;
-  } else {
-    itemsSinceLastAd++;
-  }
-
-  if (itemsSinceLastAd >= 5 && autoAdIndex < autoAds.length) {
-    const adToInsert = autoAds[autoAdIndex];
-    finalContent.splice(i + 1, 0, adToInsert);
-    itemsSinceLastAd = 0;
-    autoAdIndex++;
-    i++;
-  }
-}
-
-if (autoAdIndex === 0 && autoAds.length > 0 && finalContent.length > 0) {
-  finalContent.push(autoAds[0]);
-}
 ---
 
-<Layout title="Web3Ships">
-  <div class="flex flex-col gap-12">
-    <!-- Hero Section with Space Animation -->
-    <SpaceBackground>
-      <h1 class="text-4xl font-extrabold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary animate-gradient-x">
-        Explore the Future
-      </h1>
-      <p class="max-w-[700px] text-white/80 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-        Tech, Culture, and Modern Methodologies. A collection of thoughts and experiments.
-      </p>
-    </SpaceBackground>
-
-    <!-- Main Content Layout -->
-    <div class="grid grid-cols-1 gap-12 lg:grid-cols-12 items-start">
-
-      <!-- Latest Articles -->
-      <div class="lg:col-span-8">
-        <div class="flex items-center justify-between mb-8">
-          <h2 class="text-3xl font-bold tracking-tight">Latest Articles</h2>
+<Layout title="Web3Ships" useMainContainer={false}>
+  <div class="flex flex-col gap-12 pb-24">
+    <!-- Hero Section -->
+    <div class="container mx-auto px-4 md:px-6 pt-8">
+      <SpaceBackground>
+        <div class="inline-flex items-center rounded-full border border-white/20 bg-white/5 px-3 py-1 text-sm text-white backdrop-blur-sm mb-6">
+          <span className="mr-2">🚀</span> 次世代Web開発メディア
         </div>
+        <h1 class="text-4xl font-extrabold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl text-white mb-6 drop-shadow-lg">
+          宇宙船で航海する<br class="hidden md:block" />
+          デジタル技術の羅針盤
+        </h1>
+        <p class="max-w-[700px] text-white/80 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed mb-8">
+          Web制作・開発から最新のAI・Web3技術まで、<br />
+          明日のキャッチアップに必要な知識をお届けします。
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4">
+          <a href="#latest-articles" class="inline-flex h-12 items-center justify-center rounded-md bg-white px-8 text-sm font-medium text-black shadow transition-colors hover:bg-white/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
+            最新記事を読む
+          </a>
+          <a href="/contact" class="inline-flex h-12 items-center justify-center rounded-md border border-white/20 bg-white/10 px-8 text-sm font-medium text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
+            お問い合わせ
+          </a>
+        </div>
+      </SpaceBackground>
+    </div>
 
-        {finalContent.length > 0 ? (
-          <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
-            {finalContent.map((item: any) => 
-               'htmlCode' in item ? (
-                <AdCard ad={item as Advertisement} />
-              ) : (
-                <ArticleCard article={item as Article} />
-              )
-            )}
+    <!-- Category Section - Full Width -->
+    <div class="-mt-10 relative z-10">
+      <CategoryGrid />
+    </div>
+
+    <div class="container mx-auto px-4 max-w-7xl space-y-20 relative z-10 pb-20">
+
+      <!-- Main Content Layout (2 Columns) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12" id="latest-articles">
+        
+        <!-- Main Column: Latest Articles -->
+        <main class="lg:col-span-8">
+          
+          <!-- Development Achievements -->
+          <div class="mb-12">
+            <AchievementSection />
           </div>
-        ) : (
-          <div class="flex h-40 w-full flex-col items-center justify-center rounded-lg border border-dashed text-center">
-            <h3 class="text-lg font-bold">No articles found</h3>
-            <p class="text-muted-foreground">
-              Make sure Strapi is running and you have published some content.
-            </p>
+
+          <div class="mb-8">
+             <h2 class="text-xl font-bold tracking-tight mb-4">最新記事一覧</h2>
+             <div class="rounded-xl border border-border/40 bg-card overflow-hidden">
+                {articles.length > 0 ? (
+                  <div class="flex flex-col">
+                    {articles.map((article: Article) => (
+                      <ArticleListItem article={article} />
+                    ))}
+                  </div>
+                ) : (
+                  <div class="p-12 text-center text-muted-foreground">
+                    <p>記事が見つかりませんでした。</p>
+                  </div>
+                )}
+             </div>
           </div>
-        )}
+        </main>
+
+        <!-- Sidebar -->
+        <aside class="lg:col-span-4 sticky top-24 h-fit">
+          <Sidebar />
+        </aside>
+
       </div>
-
-      <!-- Sidebar -->
-      <aside class="lg:col-span-4 space-y-8 sticky top-24">
-        <PopularArticles />
-      </aside>
-
     </div>
   </div>
 </Layout>

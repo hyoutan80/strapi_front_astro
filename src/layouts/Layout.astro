@@ -9,7 +9,7 @@ interface Props {
 	description?: string;
 }
 
-const { title, description = "Web3Ships - A premium tech blog built with Astro and Strapi" } = Astro.props;
+const { title, description = "Web3Ships - A premium tech blog built with Astro and Strapi", useMainContainer = true } = Astro.props;
 ---
 
 <!doctype html>
@@ -27,7 +27,7 @@ const { title, description = "Web3Ships - A premium tech blog built with Astro a
 	</head>
 	<body class="min-h-screen font-sans antialiased flex flex-col">
 		<Header />
-		<main class="flex-1 container mx-auto px-4 md:px-6 py-8">
+		<main class={`flex-1 ${useMainContainer ? "container mx-auto px-4 md:px-6 py-8" : ""}`}>
 			<slot />
 		</main>
 		<Footer />

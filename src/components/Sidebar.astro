@@ -1,0 +1,127 @@
+---
+import { Search, User, ExternalLink } from "lucide-react";
+
+
+// Static categories for the sidebar list
+import { fetchAPI } from "../lib/strapi";
+import type { Category } from "../types";
+
+// Configuration for displayed categories
+const targetCategories = [
+  { slug: "web-development", label: "Web制作・開発" },
+  { slug: "ai-web3", label: "AI・Web3" },
+  { slug: "direction", label: "ディレクション" },
+  { slug: "lifestyle", label: "ライフスタイル" },
+];
+
+async function getCategoryData() {
+  const token = import.meta.env.STRAPI_API_TOKEN;
+  const headers = { Authorization: `Bearer ${token}` };
+
+  const promises = targetCategories.map(async (target) => {
+    try {
+      const response = await fetchAPI(
+        "/articles",
+        {
+          filters: {
+            category: {
+              slug: {
+                $eq: target.slug,
+              },
+            },
+          },
+          pagination: {
+            pageSize: 1, // Minimize data transfer, we only need meta.total
+          },
+        },
+        { headers }
+      );
+
+      return {
+        name: target.label,
+        count: response?.meta?.pagination?.total || 0,
+        href: `/blog/${target.slug}`,
+      };
+    } catch (error) {
+      console.error(`Failed to fetch category counts for ${target.slug}`, error);
+      // Fallback to -1 if error
+      return {
+        name: target.label,
+        count: -1, // Error indicator
+        href: `/blog/${target.slug}`,
+      };
+    }
+  });
+
+  return await Promise.all(promises);
+}
+
+const categories = await getCategoryData();
+---
+
+<div class="space-y-8">
+  <!-- Search Widget -->
+  <div class="rounded-xl border bg-card text-card-foreground shadow-sm p-6">
+    <div class="flex items-center gap-2 mb-4">
+      <Search className="w-4 h-4 text-primary" />
+      <h3 class="font-semibold text-sm">検索</h3>
+    </div>
+    <form action="/search" method="get">
+      <input
+        type="text"
+        name="q"
+        placeholder="キーワードで検索..."
+        class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+      />
+    </form>
+  </div>
+
+  <!-- Profile Widget -->
+  <div class="rounded-xl border bg-card text-card-foreground shadow-sm p-6">
+    <div class="flex items-center gap-2 mb-4">
+      <User className="w-4 h-4 text-primary" />
+      <h3 class="font-semibold text-sm">プロフィール</h3>
+    </div>
+    <div class="flex items-center gap-4 mb-4">
+      <div class="w-12 h-12 rounded-full bg-muted flex items-center justify-center shrink-0">
+         <User className="w-6 h-6 text-muted-foreground" />
+      </div>
+      <div>
+        <h4 class="font-bold text-sm">Webディレクター×AI</h4>
+        <p class="text-xs text-muted-foreground">開発者</p>
+      </div>
+    </div>
+    <p class="text-xs text-muted-foreground leading-relaxed">
+      Web制作・ディレクションとAI技術の融合を探求しています。
+    </p>
+  </div>
+
+  <!-- Categories Widget -->
+  <div class="rounded-xl border bg-card text-card-foreground shadow-sm p-6">
+    <h3 class="font-semibold text-sm mb-4">カテゴリー一覧</h3>
+    <ul class="space-y-3">
+      {categories.map((cat) => (
+        <li>
+          <a href={cat.href} class="flex items-center justify-between text-sm hover:text-primary transition-colors group">
+            <div class="flex items-center gap-2">
+               {/* Icon placeholder logic could go here */}
+               <span class="text-muted-foreground group-hover:text-primary transition-colors">{cat.name}</span>
+            </div>
+            <span class="text-xs text-muted-foreground/50">({cat.count})</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+
+
+
+  <!-- Ad Widget -->
+  <div class="rounded-xl border bg-card text-card-foreground shadow-sm p-6">
+    <h3 class="font-semibold text-sm mb-4">広告</h3>
+    <div class="aspect-square w-full bg-muted/20 flex flex-col items-center justify-center rounded-lg border border-dashed border-border/50 text-muted-foreground">
+        <ExternalLink className="w-8 h-8 mb-2 opacity-50" />
+        <span class="text-xs">広告スペース</span>
+    </div>
+  </div>
+</div>
