@@ -6,7 +6,7 @@ import vercel from '@astrojs/vercel';
 // https://astro.build/config
 export default defineConfig({
     integrations: [react(), tailwind()],
-    output: 'hybrid',
+    output: 'server',
     adapter: vercel({
         imageService: true,
     }),
