@@ -1,0 +1,104 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import ArticleCard from "../../components/ArticleCard.astro";
+import PopularArticles from "../../components/PopularArticles.astro";
+import { fetchAPI } from "../../lib/strapi";
+import { Breadcrumbs } from "../../components/Breadcrumbs.tsx";
+import type { Article } from "../../types";
+
+export async function getStaticPaths() {
+    const path = `/tags`;
+    const token = import.meta.env.STRAPI_API_TOKEN;
+    const options = { headers: { Authorization: `Bearer ${token}` } };
+    const responseData = await fetchAPI(path, {}, options);
+    
+    return responseData.data.map((tag: any) => ({
+        params: { tag: tag.slug },
+    }));
+}
+
+const { tag: tagSlug } = Astro.params;
+
+async function getTagData(slug: string) {
+    const path = `/tags`;
+    const urlParamsObject = {
+        pagination: { pageSize: 100 },
+    };
+    const token = import.meta.env.STRAPI_API_TOKEN;
+    const options = { headers: { Authorization: `Bearer ${token}` } };
+    const responseData = await fetchAPI(path, urlParamsObject, options);
+    console.log("Tag Detail Fetch Response (All):", JSON.stringify(responseData?.data?.[0], null, 2));
+    
+    const tags = responseData?.data || [];
+    return tags.find((t: any) => {
+        const tSlug = t.Slug || t.attributes?.Slug || t.slug || t.attributes?.slug;
+        return tSlug === slug;
+    });
+}
+
+async function getArticlesByTag(slug: string) {
+    const path = `/articles`;
+    // We need to fetch all articles and filter manually because deep filtering on 
+    // inconsistent field names (tags.slug vs tags.Slug) is unreliable or complex via URL params
+    const urlParamsObject = {
+        sort: ["display_date:desc", "publishedAt:desc"],
+        populate: {
+            cover: { fields: ["url"] },
+            category: { populate: "*" },
+            tags: { populate: "*" }, // Populate tags to filter in JS
+        },
+        pagination: { pageSize: 100 } // Get enough articles to filter
+    };
+    const token = import.meta.env.STRAPI_API_TOKEN;
+    const options = { headers: { Authorization: `Bearer ${token}` } };
+    const responseData = await fetchAPI(path, urlParamsObject, options);
+    
+    // Filter articles that have the matching tag slug
+    const articles = responseData?.data || [];
+    return articles.filter((article: any) => {
+         const articleTags = article.tags || article.attributes?.tags?.data || [];
+         return articleTags.some((t: any) => {
+             const tSlug = t.Slug || t.attributes?.Slug || t.slug || t.attributes?.slug;
+             return tSlug === slug;
+         });
+    });
+}
+
+const tag = await getTagData(tagSlug!);
+const articles = await getArticlesByTag(tagSlug!);
+
+if (!tag) {
+    return Astro.rewrite("/404");
+}
+---
+
+<Layout title={`${tag.Name || tag.attributes?.Name || tag.name || tag.attributes?.name || tag.Slug || tag.slug} - Blog`} description={`Articles tagged with ${tag.Name || tag.attributes?.Name || tag.name || tag.attributes?.name || tag.Slug || tag.slug}`}>
+    <div class="flex flex-col gap-8">
+        <Breadcrumbs client:load items={[{ label: tag.Name || tag.attributes?.Name || tag.name || tag.attributes?.name || tag.Slug || tag.slug }]} />
+        <section class="flex flex-col items-center justify-center space-y-4 text-center pt-4 pb-12">
+            <h1 class="text-4xl font-extrabold tracking-tighter sm:text-5xl md:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
+                #{tag.Name || tag.attributes?.Name || tag.name || tag.attributes?.name || tag.Slug || tag.slug}
+            </h1>
+        </section>
+
+        <div class="grid grid-cols-1 gap-12 lg:grid-cols-12 items-start">
+            <div class="lg:col-span-8">
+                {articles.length > 0 ? (
+                    <div class="grid gap-6 sm:grid-cols-2">
+                        {articles.map((article: Article) => (
+                            <ArticleCard article={article} />
+                        ))}
+                    </div>
+                ) : (
+                    <div class="flex h-40 w-full flex-col items-center justify-center rounded-lg border border-dashed text-center">
+                        <h3 class="text-lg font-bold">No articles found with this tag</h3>
+                    </div>
+                )}
+            </div>
+
+            <aside class="lg:col-span-4 space-y-8 sticky top-24">
+                <PopularArticles />
+            </aside>
+        </div>
+    </div>
+</Layout>

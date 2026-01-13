@@ -34,6 +34,7 @@ async function getArticle(slug: string) {
         populate: {
             cover: { fields: ["url"] },
             category: { populate: "*" },
+            tags: { populate: "*" },
             blocks: {
                 populate: "*",
             },
@@ -70,7 +71,11 @@ if (!article) {
 }
 
 const articleData = article.attributes || article;
-const { title, content, publishedAt, cover, category, views, blocks, display_date } = articleData;
+const { title, content, publishedAt, cover, category, tags, views, blocks, display_date } = articleData;
+
+// Normalize tags data structure
+const tagsData = Array.isArray(tags) ? tags : tags?.data || [];
+
 const displayDate = display_date || publishedAt;
 
 const rawContentSource = (blocks && Array.isArray(blocks) && blocks.length > 0)
@@ -117,6 +122,25 @@ const isOldArticle = displayDate ? differenceInYears(new Date(), new Date(displa
                         )}
                         <ViewCounter client:load slug={slug} initialViews={views} />
                     </div>
+
+                    {tagsData && tagsData.length > 0 && (
+                        <div class="mt-4 flex flex-wrap gap-2">
+                            {tagsData.map((tag: any) => {
+                                const tagName = tag.Name || tag.attributes?.Name || tag.name || tag.attributes?.name;
+                                const tagSlug = tag.Slug || tag.attributes?.Slug || tag.slug || tag.attributes?.slug;
+                                if (!tagName || !tagSlug) return null;
+                                
+                                return (
+                                    <a
+                                        href={`/tags/${tagSlug}`}
+                                        class="inline-flex items-center rounded-md border border-transparent bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground transition-colors hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                    >
+                                        #{tagName}
+                                    </a>
+                                );
+                            })}
+                        </div>
+                    )}
                 </header>
 
                 {isOldArticle && (

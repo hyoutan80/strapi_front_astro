@@ -4,6 +4,7 @@ import SpaceBackground from '../components/SpaceBackground.astro';
 import CategoryGrid from '../components/CategoryGrid.astro';
 import AchievementSection from '../components/AchievementSection.astro';
 import ArticleListItem from '../components/ArticleListItem.astro';
+import TagList from '../components/TagList.astro';
 import Sidebar from '../components/Sidebar.astro';
 import { fetchAPI } from '../lib/strapi';
 import type { Article } from '../types';
@@ -65,6 +66,10 @@ const { data: articles } = await getArticles();
     <!-- Category Section - Full Width -->
     <div class="-mt-10 relative z-10">
       <CategoryGrid />
+    </div>
+
+    <div class="relative z-10 mb-10">
+        <TagList />
     </div>
 
     <div class="container mx-auto px-4 max-w-7xl space-y-20 relative z-10 pb-20">

@@ -4,7 +4,7 @@ import qs from "qs";
 export const STRAPI_URL = import.meta.env.STRAPI_URL || "https://cms.web3ships.com";
 
 export async function fetchAPI(
-    path: string,
+    pathUrl: string,
     urlParamsObject = {},
     options = {}
 ) {
@@ -17,7 +17,7 @@ export async function fetchAPI(
         };
 
         const queryString = qs.stringify(urlParamsObject);
-        const requestUrl = `${STRAPI_URL}/api${path}${queryString ? `?${queryString}` : ""}`;
+        const requestUrl = `${STRAPI_URL}/api${pathUrl}${queryString ? `?${queryString}` : ""}`;
 
         console.log(`Fetching from: ${requestUrl}`);
 
@@ -31,6 +31,7 @@ export async function fetchAPI(
             } catch (e) {
                 console.error("Could not read error body");
             }
+
             throw new Error(`An error occurred please try again`);
         }
         const data = await response.json();

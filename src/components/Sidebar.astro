@@ -57,6 +57,27 @@ async function getCategoryData() {
 }
 
 const categories = await getCategoryData();
+
+async function getTags() {
+  try {
+    const token = import.meta.env.STRAPI_API_TOKEN;
+    const path = `/tags`;
+    const urlParamsObject = {
+      pagination: {
+        pageSize: 50,
+      },
+    };
+    const options = { headers: { Authorization: `Bearer ${token}` } };
+    const responseData = await fetchAPI(path, urlParamsObject, options);
+    console.log("Sidebar Tag Fetch Response:", JSON.stringify(responseData, null, 2));
+    return responseData.data || [];
+  } catch (error) {
+    console.error("Failed to fetch tags in Sidebar:", error);
+    return [];
+  }
+}
+
+const tags = await getTags();
 ---
 
 <div class="space-y-8">
@@ -112,6 +133,31 @@ const categories = await getCategoryData();
         </li>
       ))}
     </ul>
+  </div>
+
+  <!-- Tags Widget -->
+  <div class="rounded-xl border bg-card text-card-foreground shadow-sm p-6">
+    <h3 class="font-semibold text-sm mb-4">タグ</h3>
+    {tags.length > 0 ? (
+        <div class="flex flex-wrap gap-2">
+            {tags.map((tag: any) => {
+                const name = tag.Name || tag.attributes?.Name || tag.name || tag.attributes?.name;
+                const slug = tag.Slug || tag.attributes?.Slug || tag.slug || tag.attributes?.slug;
+                if (!name || !slug) return null;
+
+                return (
+                    <a
+                        href={`/tags/${slug}`}
+                        class="inline-flex items-center rounded-md border border-border bg-secondary/50 px-2.5 py-0.5 text-xs font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                    >
+                        #{name}
+                    </a>
+                );
+            })}
+        </div>
+    ) : (
+        <p class="text-xs text-muted-foreground">タグが見つかりません</p>
+    )}
   </div>
 
 

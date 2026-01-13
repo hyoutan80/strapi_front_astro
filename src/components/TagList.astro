@@ -1,0 +1,58 @@
+---
+import { fetchAPI } from '../lib/strapi';
+import { cn } from '../lib/utils';
+import { Tag as TagIcon } from 'lucide-react';
+
+async function getTags() {
+  try {
+    const token = import.meta.env.STRAPI_API_TOKEN;
+    const path = `/tags`;
+    const urlParamsObject = {
+      pagination: {
+        pageSize: 100,
+      },
+      populate: {
+          articles: { count: true } 
+      }
+    };
+    const options = { headers: { Authorization: `Bearer ${token}` } };
+    const responseData = await fetchAPI(path, urlParamsObject, options);
+    console.log("TagList Data Sample:", JSON.stringify(responseData.data?.[0], null, 2));
+    return responseData.data || [];
+  } catch (error) {
+    console.error("Failed to fetch tags:", error);
+    return [];
+  }
+}
+
+const tags = await getTags();
+---
+
+{tags.length > 0 && (
+  <section class="py-2 border-b border-border/40 bg-background/50 backdrop-blur-sm">
+    <div class="container mx-auto px-4 max-w-7xl">
+      <div class="flex items-center gap-4 overflow-x-auto pb-2 pt-2 no-scrollbar">
+        <div class="flex items-center text-sm font-medium text-muted-foreground whitespace-nowrap">
+           <TagIcon className="w-4 h-4 mr-2" />
+           Popular Tags:
+        </div>
+        <div class="flex gap-2">
+            {tags.map((tag: any) => {
+                const name = tag.Name || tag.attributes?.Name || tag.name || tag.attributes?.name;
+                const slug = tag.Slug || tag.attributes?.Slug || tag.slug || tag.attributes?.slug;
+                if (!name || !slug) return null;
+
+                return (
+                    <a 
+                        href={`/tags/${slug}`}
+                        class="inline-flex items-center rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary whitespace-nowrap"
+                    >
+                        #{name}
+                    </a>
+                );
+            })}
+        </div>
+      </div>
+    </div>
+  </section>
+)}

@@ -68,6 +68,17 @@ export interface Category {
     updatedAt: string;
 }
 
+export interface Tag {
+    id: number;
+    documentId: string;
+    name: string;
+    slug: string;
+    Name?: string; // Capitalized field name support
+    Slug?: string; // Capitalized field name support
+    createdAt: string;
+    updatedAt: string;
+}
+
 export interface Article {
     id: number;
     documentId: string;
@@ -81,6 +92,7 @@ export interface Article {
     display_date?: string | null;
     cover?: StrapiData<ImageAttributes> | null; // Strapi 5 might return just the object
     category?: Category | null;
+    tags?: Tag[] | null;
     views?: number;
 }
 

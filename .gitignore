@@ -28,3 +28,5 @@ build/
 shaky-sphere/
 test-paths.js
 backup-nextjs/
+.vercel
+.env*.local
